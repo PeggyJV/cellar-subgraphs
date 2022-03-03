@@ -1,0 +1,12 @@
+{
+  "name": "@sommelier/abis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "codegen": "true",
+    "create-local": "true",
+    "remove-local": "true",
+    "deploy-local": "true"
+  }
+}
