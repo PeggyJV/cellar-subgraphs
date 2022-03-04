@@ -1,0 +1,14 @@
+{
+  "name": "cellars",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "graph build",
+    "codegen": "graph codegen",
+    "create-local": "graph create --node http://localhost:8020 sommelier/cellars",
+    "remove-local": "graph remove --node http://localhost:8020 sommelier/cellars",
+    "deploy-local": "graph deploy --node http://localhost:8020 --ipfs http://localhost:5001 sommelier/cellars",
+    "test": "graph test"
+  }
+}

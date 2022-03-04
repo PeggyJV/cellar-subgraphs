@@ -34,6 +34,13 @@ graph-node:
 docker compse up
 ```
 
+## Running tests
+WIP
+
+```bash
+cd matchstick && docker build -t matchstick .
+```
+
 ### M1 Macs
 M1 macs are not officially supported but they do have some [instructions](git@github.com:graphprotocol/graph-node.git) on how to rebuild the graph-node image and use `docker compose up`. Alternatively, you can open a rosetta terminal and run the development version.
 - Install Rust in a Rosetta terminal (This will clash with an existing arm64 install! It is possible to run these side by side with the right shell configuration.)

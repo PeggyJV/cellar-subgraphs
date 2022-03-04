@@ -1,0 +1,41 @@
+specVersion: 0.0.4
+description: Subgraph that tracks Cellars on the Sommelier network
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Cellar
+    network: mainnet
+    source:
+      address: "0xf4a57dac3d3a4772347f813c6bf52b6286ac649e" # placeholder
+      abi: Cellar
+      startBlock: 24701870 # placeholder
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - Cellar
+        - CellarShare
+        - CellarShareTransferEvent
+        - CellarDayData
+        - WalletDayData
+        - Denom
+        - AddRemoveEvent
+        - DepositWithdrawEvent
+      abis:
+        - name: Cellar
+          file: ../../node_modules/@sommelier/abis/src/aave-stablecoin-cellar.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: CellarDeposit(uint256)
+          handler: handleCellarDeposit
+        - event: CellarWithdraw(uint256)
+          handler: handleCellarWithdraw
+        - event: CellarAddLiquidity(indexed address,uint256)
+          handler: handleCellarAddLiquidity
+        - event: CellarRemoveLiquidity(indexed address,uint256)
+          handler: handleCellarRemoveLiquidity
+      file: ./src/cellar-mapping.ts

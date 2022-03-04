@@ -1,13 +1,18 @@
 {
-  "name": "@sommelier/cellar-subgraphs",
-  "description": "Subgraphs that track Cellars on Sommelier Network",
+  "name": "@sommelier/subgraphs",
+  "description": "Subgraphs that track Cellars and more on Sommelier Network",
   "private": true,
   "workspaces": [
-    "packages",
-    "subgraphs"
+    "packages/*",
+    "subgraphs/*"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "yarn workspaces run build",
+    "codegen": "yarn workspaces run codegen",
+    "create-local": "yarn workspaces run create-local",
+    "remove-local": "yarn workspaces run remove-local",
+    "deploy-local": "yarn workspaces run deploy-local",
+    "test": "yarn workspaces run test"
   },
   "repository": {
     "type": "git",
