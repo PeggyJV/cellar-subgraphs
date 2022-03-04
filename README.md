@@ -38,7 +38,7 @@ docker compse up
 WIP
 
 ```bash
-cd matchstick && docker build -t matchstick .
+yarn test
 ```
 
 ### M1 Macs
