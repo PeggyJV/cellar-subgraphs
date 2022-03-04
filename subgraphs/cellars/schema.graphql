@@ -1,6 +1,5 @@
 type Wallet @entity {
-	id: ID! # contract address
-	address: String!
+	id: ID! # wallet address
 
 	cellarShares: [CellarShare!]! @derivedFrom(field: "wallet")
 	cellarShareTransferEvents: [CellarShareTransferEvent!]! @derivedFrom(field: "wallet")
@@ -45,13 +44,15 @@ type CellarShareTransferEvent @entity {
 type CellarDayData @entity {
 	id: ID! # timestamp at the start of a day Date.now / 86400
 	date: Int! # epoch timestamp
+  cellar: Cellar!
 	addedLiquidity: BigInt!
 	removedLiquidity: BigInt!
-	numWallets: BigInt!
+	numWallets: Int!
 }
 
 type WalletDayData @entity {
 	id: ID! # timestamp + wallet address
+  date: Int! #epoch timestamp
   wallet: Wallet!
 	addedLiquidity: BigInt!
 	removedLiquidity: BigInt!

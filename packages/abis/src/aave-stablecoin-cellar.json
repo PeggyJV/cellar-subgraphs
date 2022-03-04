@@ -92,6 +92,19 @@
     ],
     "name": "CellarRemoveLiquidity",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "denom",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   }
 ]
 
