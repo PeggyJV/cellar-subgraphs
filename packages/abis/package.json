@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "true",
     "codegen": "true",
     "create-local": "true",
     "remove-local": "true",
-    "deploy-local": "true"
+    "deploy-local": "true",
+    "test": "true"
   }
 }

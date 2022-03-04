@@ -49,7 +49,7 @@ export function initCellarDayData(
   const cellarDayData = new CellarDayData(id);
 
   cellarDayData.cellar = cellar.id;
-  cellarDayData.date = date;
+  cellarDayData.date = date as u32;
   cellarDayData.addedLiquidity = ZERO_BI;
   cellarDayData.removedLiquidity = ZERO_BI;
   cellarDayData.numWallets = 0;
@@ -83,7 +83,7 @@ export function initWalletDayData(
   const walletDayData = new WalletDayData(id);
 
   walletDayData.wallet = wallet.id;
-  walletDayData.date = date;
+  walletDayData.date = date as u32;
   walletDayData.addedLiquidity = ZERO_BI;
   walletDayData.removedLiquidity = ZERO_BI;
 

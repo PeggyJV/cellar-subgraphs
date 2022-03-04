@@ -7,10 +7,12 @@
     "subgraphs/*"
   ],
   "scripts": {
+    "build": "yarn workspaces run build",
     "codegen": "yarn workspaces run codegen",
     "create-local": "yarn workspaces run create-local",
     "remove-local": "yarn workspaces run remove-local",
-    "deploy-local": "yarn workspaces run deploy-local"
+    "deploy-local": "yarn workspaces run deploy-local",
+    "test": "yarn workspaces run test"
   },
   "repository": {
     "type": "git",

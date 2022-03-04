@@ -35,6 +35,7 @@ export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
     wallet = new Wallet(walletAddress);
     wallet.save();
     cellar.numWalletsAllTime += 1;
+    cellar.numWalletsActive += 1;
   }
 
   // Log cellar timeseries data
