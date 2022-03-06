@@ -1,9 +1,8 @@
 type Wallet @entity {
 	id: ID! # wallet address
-
 	cellarShares: [CellarShare!]! @derivedFrom(field: "wallet")
 	cellarShareTransferEvents: [CellarShareTransferEvent!]! @derivedFrom(field: "wallet")
-	walletDayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
+	dayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
 	addRemoveEvents: [AddRemoveEvent!]! @derivedFrom(field: "wallet")
 }
 
@@ -18,7 +17,9 @@ type Cellar @entity {
 	removedLiquidityAllTime: BigInt!
 	numWalletsAllTime: Int!
 	numWalletsActive: Int!
+  sharesTotal: BigInt!
 
+  dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
 	depositWithdraws: [DepositWithdrawEvent!]! @derivedFrom(field: "cellar")
 }
 

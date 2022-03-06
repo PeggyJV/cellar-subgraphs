@@ -7,9 +7,9 @@ dataSources:
     name: Cellar
     network: mainnet
     source:
-      address: "0xf4a57dac3d3a4772347f813c6bf52b6286ac649e" # placeholder
+      address: "0xc3761eb917cd790b30dad99f6cc5b4ff93c4f9ea" # placeholder
       abi: Cellar
-      startBlock: 24701870 # placeholder
+      startBlock: 14332315 # placeholder
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
