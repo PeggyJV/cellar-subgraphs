@@ -28,7 +28,7 @@ import {
 export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   // Cellar
   const cellarAddress = event.address;
-  const cellar = loadCellar(cellarAddress);
+  let cellar = loadCellar(cellarAddress);
 
   // Log cellar statistics
   const amount = event.params.amount;
@@ -77,7 +77,7 @@ export function handleCellarRemoveLiquidity(
 ): void {
   // cellar
   const cellarAddress: Address = event.address;
-  const cellar = loadCellar(cellarAddress);
+  let cellar = loadCellar(cellarAddress);
 
   // removedLiquidityAllTime
   const liqAmount = event.params.amount;
@@ -128,14 +128,33 @@ export function handleCellarDeposit(
   event: CellarDeposit
 ): void {
   const depositAmount: BigInt = event.params.amount;
-  //
+
+  // cellar
+  const cellarAddress: Address = event.address;
+  let cellar = loadCellar(cellarAddress);
+  // active Liq should increase
+  cellar.tvlActive
+  // inactive liq should decrease
+  cellar.tvlInactive
+  
+  // createDepositWithdrawEvent
 }
 
 export function handleCellarWithdraw(
   event: CellarWithdraw
 ): void {
   const withdrawAmount: BigInt = event.params.amount;
-  //
+
+  // cellar
+  const cellarAddress: Address = event.address;
+  let cellar = loadCellar(cellarAddress);
+
+  // active Liq should decrease
+  cellar.tvlActive
+  // inactive liq should increase
+  cellar.tvlInactive
+
+  // createDepositWithdrawEvent
 }
 
 export function handleTransfer(
@@ -144,5 +163,37 @@ export function handleTransfer(
   const transferAmount: BigInt = event.params.value;
   const from: Address = event.params.from;
   const to: Address = event.params.to;
-  //
+
+  // If from is the zeroAddress, it's a mint
+  // Then, 'to' is the wallet
+
+  /* 
+    --------------------------
+    Mint 
+    --------------------------
+    TODO Update 'CellarShare'. 
+    If this object exists for the corresponding wallet, simply update the 
+      wallet's CellarShare.balance -> Add it.
+    If is doesn't already exist, initialize a cellarShare.
+      Q: Do I need to save the cellarShare like I did the cellar in the other 
+        handlers?
+      Q: More broadly, what does the `object.save()` call do in any handler?
+   */
+
+
+  // If to is the zeroAddress, it's a burn
+  // Then, 'from' is the wallet
+  /* 
+    --------------------------
+    Burn 
+    --------------------------
+    TODO Update 'CellarShare'. 
+    If this object exists for the corresponding wallet, simply update the 
+      wallet's CellarShare.balance -> Negate it.
+    If is doesn't already exist, initialize a cellarShare.
+      Q: Do I need to save the cellarShare like I did the cellar in the other 
+        handlers?
+      Q: More broadly, what does the `object.save()` call do in any handler?
+   */
+  // TODO 
 }
