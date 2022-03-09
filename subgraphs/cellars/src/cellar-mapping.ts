@@ -8,7 +8,7 @@ import {
   CellarDeposit,
   CellarRemoveLiquidity,
   CellarWithdraw,
-  Transfer,
+  Transfer as CellarShareTransferEvent,
 } from "../generated/Cellar/Cellar";
 import {
   Cellar,
@@ -31,7 +31,7 @@ import { seed } from "./utils/mock-data";
 export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   // Cellar
   const cellarAddress = event.address;
-  let cellar = loadCellar(cellarAddress);
+  let cellar: Cellar = loadCellar(cellarAddress);
 
   // Log cellar statistics
   const amount = event.params.amount;
@@ -51,12 +51,12 @@ export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   }
 
   // Log cellar timeseries data
-  const timestamp = event.block.timestamp;
-  const cellarDayData = loadCellarDayData(cellar, timestamp);
+  const timestamp: BigInt = event.block.timestamp;
+  let cellarDayData: CellarDayData = loadCellarDayData(cellar, timestamp);
   cellarDayData.addedLiquidity = cellarDayData.addedLiquidity.plus(amount);
 
   // Log wallet (user) timeseries data
-  const walletDayData = loadWalletDayData(wallet, timestamp);
+  let walletDayData: WalletDayData = loadWalletDayData(wallet, timestamp);
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(amount);
 
   // Log the actual CellarAddLiquidity event
@@ -91,8 +91,8 @@ export function handleCellarRemoveLiquidity(
   cellar.tvlTotal = cellar.tvlTotal.minus(liqAmount);
 
   // cellarDayData - Log cellar timeseries data
-  const timestamp = event.block.timestamp;
-  const cellarDayData = loadCellarDayData(cellar, timestamp);
+  const timestamp: BigInt = event.block.timestamp;
+  let cellarDayData: CellarDayData = loadCellarDayData(cellar, timestamp);
   cellarDayData.removedLiquidity = cellarDayData.removedLiquidity.plus(
     liqAmount
   );
@@ -112,7 +112,7 @@ export function handleCellarRemoveLiquidity(
   }
 
   //walletDayData - Log wallet (user) timeseries data
-  const walletDayData = loadWalletDayData(wallet, timestamp);
+  let walletDayData: WalletDayData = loadWalletDayData(wallet, timestamp);
   walletDayData.removedLiquidity = walletDayData.removedLiquidity.plus(
     liqAmount
   );
@@ -175,19 +175,24 @@ export function handleCellarWithdraw(event: CellarWithdraw): void {
   });
 }
 
-export function handleTransfer(event: Transfer): void {
-  seed();
+export function handleTransfer(event: CellarShareTransferEvent): void {
   const transferAmount: BigInt = event.params.value;
   const from: Address = event.params.from;
   const to: Address = event.params.to;
 
-  // If from is the zeroAddress, it's a mint
-  // Then, 'to' is the wallet
+  let isMint: boolean = to == Address.zero() && from != Address.zero();
+  let isBurn: boolean = from == Address.zero() && to != Address.zero();
 
-  /* 
-    --------------------------
-    Mint 
-    --------------------------
+  if (isMint) {
+    /* From ERC20.sol 
+    ```solidity
+    function _mint(address to, uint256 amount) {
+      totalSupply += amount;
+      balanceOf[to] += amount;
+      emit Transfer(address(0), to, amount)
+    }
+    ```
+
     TODO Update 'CellarShare'. 
     If this object exists for the corresponding wallet, simply update the 
       wallet's CellarShare.balance -> Add it.
@@ -195,21 +200,32 @@ export function handleTransfer(event: Transfer): void {
       Q: Do I need to save the cellarShare like I did the cellar in the other 
         handlers?
       Q: More broadly, what does the `object.save()` call do in any handler?
-   */
+    */
+    const walletAddress: Address = from;
+    const cellarAddress: Address = event.address;
+    // Switch to correct ABI.
 
-  // If to is the zeroAddress, it's a burn
-  // Then, 'from' is the wallet
-  /* 
-    --------------------------
-    Burn 
-    --------------------------
+
+  } else if (isBurn) {
+    /* From ERC20.sol 
+    ```solidity
+    function _burn(address from, uint256 amount) {
+      balanceOf[from] -= amount;
+      unchecked {totalSupply -= amount;}
+      emit Transfer(from, address(0), amount)
+    }
+    ```
+
     TODO Update 'CellarShare'. 
     If this object exists for the corresponding wallet, simply update the 
-      wallet's CellarShare.balance -> Negate it.
+      wallet's CellarShare.balance -> Add it.
     If is doesn't already exist, initialize a cellarShare.
       Q: Do I need to save the cellarShare like I did the cellar in the other 
         handlers?
       Q: More broadly, what does the `object.save()` call do in any handler?
-   */
-  // TODO
+    */
+    
+  } else {
+    // TransferEvent is neither a mint nor a burn.
+  }
 }

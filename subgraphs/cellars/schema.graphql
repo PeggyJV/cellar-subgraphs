@@ -1,7 +1,7 @@
 type Wallet @entity {
   id: ID! # wallet address
   cellarShares: [CellarShare!]! @derivedFrom(field: "wallet")
-  cellarShareTransferEvents: [CellarShareTransferEvent!]!
+  cellarShareTransferEvents: [CellarShareTransfer!]!
     @derivedFrom(field: "wallet")
   dayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
   addRemoveEvents: [AddRemoveEvent!]! @derivedFrom(field: "wallet")
@@ -24,14 +24,15 @@ type Cellar @entity {
   depositWithdraws: [DepositWithdrawEvent!]! @derivedFrom(field: "cellar")
 }
 
+
 type CellarShare @entity {
   id: ID! # <cellar address>-<user wallet>
-  cellar: Cellar!
-  wallet: Wallet!
-  balance: BigInt!
+  cellar: Cellar!  
+  wallet: Wallet!  # Account that owns the cellar shares
+  balance: BigInt! # Balance of cellar shares in 'wallet'
 }
 
-type CellarShareTransferEvent @entity {
+type CellarShareTransfer @entity {
   id: ID! # <timestamp>-<cellar address>-<user wallet>
   from: String!
   to: String!
