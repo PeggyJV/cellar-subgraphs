@@ -1,7 +1,14 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+/**
+ * @param  {CellarAddLiquidity} event
+ * @returns void
+ */
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   CellarAddLiquidity,
+  CellarDeposit,
   CellarRemoveLiquidity,
+  CellarWithdraw,
+  Transfer,
 } from "../generated/Cellar/Cellar";
 import {
   Cellar,
@@ -16,7 +23,7 @@ import {
   loadCellar,
   loadCellarDayData,
   loadWalletDayData,
-} from "./utils/helpers";
+} from "./helpers";
 
 export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   // Cellar
@@ -69,7 +76,7 @@ export function handleCellarRemoveLiquidity(
   event: CellarRemoveLiquidity
 ): void {
   // cellar
-  const cellarAddress = event.address;
+  const cellarAddress: Address = event.address;
   const cellar = loadCellar(cellarAddress);
 
   // removedLiquidityAllTime
@@ -115,4 +122,27 @@ export function handleCellarRemoveLiquidity(
   cellar.save();
   cellarDayData.save();
   walletDayData.save();
+}
+
+export function handleCellarDeposit(
+  event: CellarDeposit
+): void {
+  const depositAmount: BigInt = event.params.amount;
+  //
+}
+
+export function handleCellarWithdraw(
+  event: CellarWithdraw
+): void {
+  const withdrawAmount: BigInt = event.params.amount;
+  //
+}
+
+export function handleTransfer(
+  event: Transfer
+): void {
+  const transferAmount: BigInt = event.params.value;
+  const from: Address = event.params.from;
+  const to: Address = event.params.to;
+  //
 }
