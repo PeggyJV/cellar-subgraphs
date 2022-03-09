@@ -1,6 +1,7 @@
 import {
   CellarAddLiquidity,
   CellarRemoveLiquidity,
+  Transfer,
 } from "../generated/Cellar/Cellar";
 import {
   Cellar,
@@ -15,6 +16,11 @@ import {
   loadCellarDayData,
   loadWalletDayData,
 } from "./utils/helpers";
+
+import { seed } from "./utils/mock-data";
+export function handleTransfer(event: Transfer): void {
+  seed();
+}
 
 export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   // Cellar
