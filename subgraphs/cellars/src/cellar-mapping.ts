@@ -1,3 +1,4 @@
+import { BigInt } from "@graphprotocol/graph-ts";
 import {
   CellarAddLiquidity,
   CellarRemoveLiquidity,
@@ -5,6 +6,7 @@ import {
 import {
   Cellar,
   CellarDayData,
+  CellarShare,
   Wallet,
   WalletDayData,
 } from "../generated/schema";
@@ -67,10 +69,50 @@ export function handleCellarRemoveLiquidity(
   event: CellarRemoveLiquidity
 ): void {
   // cellar
+  const cellarAddress = event.address;
+  const cellar = loadCellar(cellarAddress);
+
   // removedLiquidityAllTime
-  // tvlInactive
-  // tvlTotal
-  // cellarDayData
-  // walletDayData
-  // addRemoveEvent
+  const liqAmount = event.params.amount;
+  cellar.removedLiquidityAllTime = cellar.removedLiquidityAllTime.plus(liqAmount)
+  cellar.tvlInactive = cellar.tvlInactive.minus(liqAmount);
+  cellar.tvlTotal = cellar.tvlTotal.minus(liqAmount);
+
+  // cellarDayData - Log cellar timeseries data
+  const timestamp = event.block.timestamp;
+  const cellarDayData = loadCellarDayData(cellar, timestamp);
+  cellarDayData.removedLiquidity = cellarDayData.removedLiquidity.plus(liqAmount);
+
+  // Wallet
+  const walletAddress = event.params.address.toHexString();
+  let wallet = Wallet.load(walletAddress);
+  // TODO: Should we change the amount of shares here? 
+  // TODO: Should we change the 'numWallets' of the cellar here?
+  // OR, should this be done in `handleCellarShareTransferEvent`?  
+  if (wallet == null) {
+    // Create a new wallet we haven't seen it before
+    wallet = new Wallet(walletAddress);
+    wallet.save();
+    cellar.numWalletsAllTime += 1;
+    cellar.numWalletsActive += 1;
+  };
+
+  //walletDayData - Log wallet (user) timeseries data
+  const walletDayData = loadWalletDayData(wallet, timestamp);
+  walletDayData.removedLiquidity = walletDayData.removedLiquidity.plus(liqAmount);
+
+  // Log the event, cellarRemoveLiquidity, as `AddRemoveEvent` 
+  createAddRemoveEvent(
+    timestamp,
+    cellar.id,
+    wallet.id,
+    liqAmount.neg(),
+    event.transaction.hash.toHexString(),
+    event.block.number
+  );
+
+  // Save entities we've modified
+  cellar.save();
+  cellarDayData.save();
+  walletDayData.save();
 }
