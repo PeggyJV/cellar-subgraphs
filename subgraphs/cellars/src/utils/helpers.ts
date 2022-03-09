@@ -108,6 +108,25 @@ export function loadWalletDayData(
   return walletDayData;
 }
 
+/**
+ * @param  {Cellar} cellar The cellar for which shares are owned.
+ * @param  {Wallet} wallet The wallet that owns the shares.
+ * @returns CellarShare
+ */
+export function initCellarShare(
+  cellar: Cellar, 
+  wallet: Wallet, 
+): CellarShare {
+  const cellarShareID: string = wallet.id + "-" + cellar.id;
+  const balanceInit: BigInt = ZERO_BI;
+
+  let cellarShare = new CellarShare(cellarShareID);
+  cellarShare.wallet = wallet.id;
+  cellarShare.cellar = cellar.id;
+  cellarShare.balance = balanceInit;
+  return cellarShare
+}
+
 export function createAddRemoveEvent(
   blockTimestamp: BigInt,
   cellarAddress: string,
