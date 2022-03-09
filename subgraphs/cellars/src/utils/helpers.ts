@@ -4,6 +4,7 @@ import {
   AddRemoveEvent,
   Cellar,
   CellarDayData,
+  CellarShare,
   Wallet,
   WalletDayData,
 } from "../../generated/schema";
@@ -125,6 +126,26 @@ export function initCellarShare(
   cellarShare.cellar = cellar.id;
   cellarShare.balance = balanceInit;
   return cellarShare
+}
+
+/** Loads the `CellarShare` corresponding to the given wallet and cellar.
+ * @param  {Wallet} wallet
+ * @param  {Cellar} cellar
+ * @returns CellarShare
+ */
+export function loadCellarShare(
+    wallet: Wallet,
+    cellar: Cellar, 
+): CellarShare {
+  const walletID: string = wallet.id;
+  const cellarID: string = cellar.id;
+  const cellarShareID: string = walletID + "-" + cellarID;
+
+  let cellarShare = CellarShare.load(cellarShareID);
+  if (cellarShare == null) {
+    cellarShare = initCellarShare(cellar, wallet);
+  }
+  return cellarShare;
 }
 
 export function createAddRemoveEvent(
