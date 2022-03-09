@@ -77,7 +77,7 @@ type AddRemoveEvent @entity {
 }
 
 type DepositWithdrawEvent @entity {
-  id: ID! # timestamp + wallet address
+  id: ID! # transaction hash
   cellar: Cellar! # to/from depending on whether it's add or remove
   amount: BigInt! # signed
   txId: String! # transaction.hash.toString()
