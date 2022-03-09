@@ -10,13 +10,13 @@ import { Address, ethereum } from "@graphprotocol/graph-ts";
 import { CellarAddLiquidity } from "../generated/Cellar/Cellar";
 import { handleCellarAddLiquidty } from "../src/cellar-mapping";
 
-function createCellarAddLiquidityEvent(
+function mockCellarAddLiquidityEvent(
   address: string,
   amount: number
 ): CellarAddLiquidity {
   const event = changetype<CellarAddLiquidity>(newMockEvent());
   const addressParam = new ethereum.EventParam(
-    "address",
+          "address",
     ethereum.Value.fromAddress(Address.fromString(address))
   );
   const amountParam = new ethereum.EventParam(
@@ -36,7 +36,7 @@ test("Wallet entity is created for new users", () => {
 
   const address = "0xe73185a8afa703a034d5a5fe038bb763fcaeb5f3";
   const amount = 1234;
-  const event = createCellarAddLiquidityEvent(address, amount);
+  const event = mockCellarAddLiquidityEvent(address, amount);
 
   const cellarAddress = event.address.toHexString();
   createMockedFunction(event.address, "denom", "denom():(address)").returns([
@@ -57,7 +57,7 @@ test("Cellar numWalletsAllTime is not incremented for existing users", () => {
 
   const address = "0xe73185a8afa703a034d5a5fe038bb763fcaeb5f3";
   const amount = 1234;
-  const event = createCellarAddLiquidityEvent(address, amount);
+  const event = mockCellarAddLiquidityEvent(address, amount);
 
   const cellarAddress = event.address.toHexString();
 

@@ -23,7 +23,9 @@ import {
   loadCellar,
   loadCellarDayData,
   loadWalletDayData,
-} from "./helpers";
+} from "./utils/helpers";
+
+import { seed } from "./utils/mock-data";
 
 export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   // Cellar
@@ -81,34 +83,40 @@ export function handleCellarRemoveLiquidity(
 
   // removedLiquidityAllTime
   const liqAmount = event.params.amount;
-  cellar.removedLiquidityAllTime = cellar.removedLiquidityAllTime.plus(liqAmount)
+  cellar.removedLiquidityAllTime = cellar.removedLiquidityAllTime.plus(
+    liqAmount
+  );
   cellar.tvlInactive = cellar.tvlInactive.minus(liqAmount);
   cellar.tvlTotal = cellar.tvlTotal.minus(liqAmount);
 
   // cellarDayData - Log cellar timeseries data
   const timestamp = event.block.timestamp;
   const cellarDayData = loadCellarDayData(cellar, timestamp);
-  cellarDayData.removedLiquidity = cellarDayData.removedLiquidity.plus(liqAmount);
+  cellarDayData.removedLiquidity = cellarDayData.removedLiquidity.plus(
+    liqAmount
+  );
 
   // Wallet
   const walletAddress = event.params.address.toHexString();
   let wallet = Wallet.load(walletAddress);
-  // TODO: Should we change the amount of shares here? 
+  // TODO: Should we change the amount of shares here?
   // TODO: Should we change the 'numWallets' of the cellar here?
-  // OR, should this be done in `handleCellarShareTransferEvent`?  
+  // OR, should this be done in `handleCellarShareTransferEvent`?
   if (wallet == null) {
     // Create a new wallet we haven't seen it before
     wallet = new Wallet(walletAddress);
     wallet.save();
     cellar.numWalletsAllTime += 1;
     cellar.numWalletsActive += 1;
-  };
+  }
 
   //walletDayData - Log wallet (user) timeseries data
   const walletDayData = loadWalletDayData(wallet, timestamp);
-  walletDayData.removedLiquidity = walletDayData.removedLiquidity.plus(liqAmount);
+  walletDayData.removedLiquidity = walletDayData.removedLiquidity.plus(
+    liqAmount
+  );
 
-  // Log the event, cellarRemoveLiquidity, as `AddRemoveEvent` 
+  // Log the event, cellarRemoveLiquidity, as `AddRemoveEvent`
   createAddRemoveEvent(
     timestamp,
     cellar.id,
@@ -124,25 +132,21 @@ export function handleCellarRemoveLiquidity(
   walletDayData.save();
 }
 
-export function handleCellarDeposit(
-  event: CellarDeposit
-): void {
+export function handleCellarDeposit(event: CellarDeposit): void {
   const depositAmount: BigInt = event.params.amount;
 
   // cellar
   const cellarAddress: Address = event.address;
   let cellar = loadCellar(cellarAddress);
   // active Liq should increase
-  cellar.tvlActive
+  cellar.tvlActive;
   // inactive liq should decrease
-  cellar.tvlInactive
-  
+  cellar.tvlInactive;
+
   // createDepositWithdrawEvent
 }
 
-export function handleCellarWithdraw(
-  event: CellarWithdraw
-): void {
+export function handleCellarWithdraw(event: CellarWithdraw): void {
   const withdrawAmount: BigInt = event.params.amount;
 
   // cellar
@@ -150,16 +154,15 @@ export function handleCellarWithdraw(
   let cellar = loadCellar(cellarAddress);
 
   // active Liq should decrease
-  cellar.tvlActive
+  cellar.tvlActive;
   // inactive liq should increase
-  cellar.tvlInactive
+  cellar.tvlInactive;
 
   // createDepositWithdrawEvent
 }
 
-export function handleTransfer(
-  event: Transfer
-): void {
+export function handleTransfer(event: Transfer): void {
+  seed();
   const transferAmount: BigInt = event.params.value;
   const from: Address = event.params.from;
   const to: Address = event.params.to;
@@ -180,7 +183,6 @@ export function handleTransfer(
       Q: More broadly, what does the `object.save()` call do in any handler?
    */
 
-
   // If to is the zeroAddress, it's a burn
   // Then, 'from' is the wallet
   /* 
@@ -195,5 +197,5 @@ export function handleTransfer(
         handlers?
       Q: More broadly, what does the `object.save()` call do in any handler?
    */
-  // TODO 
+  // TODO
 }
