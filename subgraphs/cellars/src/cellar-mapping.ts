@@ -20,6 +20,7 @@ import {
 
 import {
   createAddRemoveEvent,
+  createDepositWithdrawEvent,
   loadCellar,
   loadCellarDayData,
   loadWalletDayData,
@@ -138,12 +139,19 @@ export function handleCellarDeposit(event: CellarDeposit): void {
   // cellar
   const cellarAddress: Address = event.address;
   let cellar = loadCellar(cellarAddress);
-  // active Liq should increase
-  cellar.tvlActive;
-  // inactive liq should decrease
-  cellar.tvlInactive;
+  cellar.tvlActive = cellar.tvlActive.plus(depositAmount);
+  cellar.tvlInactive = cellar.tvlInactive.minus(depositAmount);
+  cellar.save();
 
   // createDepositWithdrawEvent
+  const timestamp = event.block.timestamp;
+  createDepositWithdrawEvent({
+    blockTimestamp: timestamp,
+    cellarAddress: cellar.id,
+    amount: depositAmount,
+    txId: event.transaction.hash.toHexString(),
+    blockNumber: event.block.number,
+  });
 }
 
 export function handleCellarWithdraw(event: CellarWithdraw): void {
@@ -152,13 +160,19 @@ export function handleCellarWithdraw(event: CellarWithdraw): void {
   // cellar
   const cellarAddress: Address = event.address;
   let cellar = loadCellar(cellarAddress);
-
-  // active Liq should decrease
-  cellar.tvlActive;
-  // inactive liq should increase
-  cellar.tvlInactive;
+  cellar.tvlActive = cellar.tvlActive.minus(withdrawAmount);
+  cellar.tvlInactive = cellar.tvlInactive.plus(withdrawAmount);
+  cellar.save();
 
   // createDepositWithdrawEvent
+  const timestamp = event.block.timestamp;
+  createDepositWithdrawEvent({
+    blockTimestamp: timestamp,
+    cellarAddress: cellar.id,
+    amount: withdrawAmount.neg(),
+    txId: event.transaction.hash.toHexString(),
+    blockNumber: event.block.number,
+  });
 }
 
 export function handleTransfer(event: Transfer): void {
