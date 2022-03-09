@@ -1,5 +1,5 @@
 import { Address, BigInt } from "@graphprotocol/graph-ts";
-import { Cellar as CellarContract } from "../../generated/Cellar/Cellar";
+import { Cellar as CellarContract } from "../generated/Cellar/Cellar";
 import {
   AddRemoveEvent,
   Cellar,
@@ -7,7 +7,7 @@ import {
   CellarShare,
   Wallet,
   WalletDayData,
-} from "../../generated/schema";
+} from "../generated/schema";
 
 const ID_DELIMITER = "-";
 export const ZERO_BI = BigInt.fromI32(0);
