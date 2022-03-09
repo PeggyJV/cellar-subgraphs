@@ -9,6 +9,7 @@
     "create-local": "graph create --node http://localhost:8020 sommelier/cellars",
     "remove-local": "graph remove --node http://localhost:8020 sommelier/cellars",
     "deploy-local": "graph deploy --node http://localhost:8020 --ipfs http://localhost:5001 sommelier/cellars",
+    "deploy-hosted": "graph deploy --product hosted-service elkdao/cellars",
     "test": "graph test"
   }
 }

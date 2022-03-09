@@ -9,9 +9,9 @@ import {
   WalletDayData,
 } from "../../generated/schema";
 
-const ID_DELIMITER = "-";
+export const ID_DELIMITER = "-";
 export const ZERO_BI = BigInt.fromI32(0);
-const DAY_SECONDS = 60 * 60 * 24;
+export const DAY_SECONDS = 60 * 60 * 24;
 
 export function initCellar(contractAddress: Address): Cellar {
   const id = contractAddress.toHexString();
