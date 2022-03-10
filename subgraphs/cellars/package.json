@@ -11,14 +11,5 @@
     "deploy-local": "graph deploy --node http://localhost:8020 --ipfs http://localhost:5001 sommelier/cellars",
     "deploy-hosted": "graph deploy --product hosted-service elkdao/cellars",
     "test": "graph test"
-  },
-  "dependencies": {
-    "@graphprotocol/graph-ts": "^0.25.0",
-    "matchstick-as": "^0.4.0",
-    "semver": "^7.3.5",
-    "u32": "^1.0.3"
-  },
-  "devDependencies": {
-    "matchstick-as": "^0.4.0"
   }
 }

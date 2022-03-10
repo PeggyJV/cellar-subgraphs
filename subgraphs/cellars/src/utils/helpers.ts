@@ -4,8 +4,6 @@ import {
   AddRemoveEvent,
   Cellar,
   CellarDayData,
-  CellarShare,
-  DepositWithdrawEvent,
   Wallet,
   WalletDayData,
 } from "../../generated/schema";
@@ -110,39 +108,6 @@ export function loadWalletDayData(
   return walletDayData;
 }
 
-/**
- * @param  {Cellar} cellar The cellar for which shares are owned.
- * @param  {Wallet} wallet The wallet that owns the shares.
- * @returns CellarShare
- */
-export function initCellarShare(cellar: Cellar, wallet: Wallet): CellarShare {
-  const cellarShareID: string = wallet.id + "-" + cellar.id;
-  const balanceInit: BigInt = ZERO_BI;
-
-  let cellarShare = new CellarShare(cellarShareID);
-  cellarShare.wallet = wallet.id;
-  cellarShare.cellar = cellar.id;
-  cellarShare.balance = balanceInit;
-  return cellarShare;
-}
-
-/** Loads the `CellarShare` corresponding to the given wallet and cellar.
- * @param  {Wallet} wallet
- * @param  {Cellar} cellar
- * @returns CellarShare
- */
-export function loadCellarShare(wallet: Wallet, cellar: Cellar): CellarShare {
-  const walletID: string = wallet.id;
-  const cellarID: string = cellar.id;
-  const cellarShareID: string = walletID + "-" + cellarID;
-
-  let cellarShare = CellarShare.load(cellarShareID);
-  if (cellarShare == null) {
-    cellarShare = initCellarShare(cellar, wallet);
-  }
-  return cellarShare;
-}
-
 export function createAddRemoveEvent(
   blockTimestamp: BigInt,
   cellarAddress: string,
@@ -163,27 +128,6 @@ export function createAddRemoveEvent(
   event.txId = txId;
   event.block = blockNumber.toI32();
   event.timestamp = blockTimestamp.toI32();
-  event.save();
-
-  return event;
-}
-
-export function createDepositWithdrawEvent(args: {
-  blockTimestamp: BigInt;
-  cellarAddress: string;
-  amount: BigInt;
-  txId: string;
-  blockNumber: BigInt;
-}): DepositWithdrawEvent {
-  // id: txId
-  const id = args.txId;
-  const event = new DepositWithdrawEvent(id);
-
-  event.cellar = args.cellarAddress;
-  event.amount = args.amount;
-  event.txId = args.txId;
-  event.block = args.blockNumber.toI32();
-  event.timestamp = args.blockTimestamp.toI32();
   event.save();
 
   return event;

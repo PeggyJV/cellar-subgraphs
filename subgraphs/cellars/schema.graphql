@@ -1,87 +1,85 @@
 type Wallet @entity {
-  id: ID! # wallet address
-  cellarShares: [CellarShare!]! @derivedFrom(field: "wallet")
-  cellarShareTransferEvents: [CellarShareTransfer!]!
-    @derivedFrom(field: "wallet")
-  dayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
-  addRemoveEvents: [AddRemoveEvent!]! @derivedFrom(field: "wallet")
+	id: ID! # wallet address
+	cellarShares: [CellarShare!]! @derivedFrom(field: "wallet")
+	cellarShareTransferEvents: [CellarShareTransferEvent!]! @derivedFrom(field: "wallet")
+	dayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
+	addRemoveEvents: [AddRemoveEvent!]! @derivedFrom(field: "wallet")
 }
 
 type Cellar @entity {
-  id: ID! # contract address
-  name: String!
-  denom: Denom! # token address
-  tvlActive: BigInt!
-  tvlInactive: BigInt!
-  tvlTotal: BigInt!
-  addedLiquidityAllTime: BigInt!
-  removedLiquidityAllTime: BigInt!
-  numWalletsAllTime: Int!
-  numWalletsActive: Int!
+	id: ID! # contract address
+	name: String!
+	denom: Denom! # token address
+	tvlActive: BigInt!
+	tvlInactive: BigInt!
+	tvlTotal: BigInt!
+	addedLiquidityAllTime: BigInt!
+	removedLiquidityAllTime: BigInt!
+	numWalletsAllTime: Int!
+	numWalletsActive: Int!
   sharesTotal: BigInt!
 
   dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
-  depositWithdraws: [DepositWithdrawEvent!]! @derivedFrom(field: "cellar")
+	depositWithdraws: [DepositWithdrawEvent!]! @derivedFrom(field: "cellar")
 }
-
 
 type CellarShare @entity {
-  id: ID! # <cellar address>-<user wallet>
-  cellar: Cellar!  
-  wallet: Wallet!  # Account that owns the cellar shares
-  balance: BigInt! # Balance of cellar shares in 'wallet'
+	id: ID! # <cellar address>-<user wallet>
+	cellar: Cellar!
+	wallet: Wallet!
+	balance: BigInt!
 }
 
-type CellarShareTransfer @entity {
-  id: ID! # <timestamp>-<cellar address>-<user wallet>
-  from: String!
-  to: String!
-  cellar: Cellar!
-  wallet: Wallet!
-  amount: BigInt! # unsigned
-  txId: String! # transaction.hash.toString()
-  block: Int! # block.number.toI32()
-  timestamp: Int! # block.timestamp.toI32()
+type CellarShareTransferEvent @entity {
+	id: ID! # <timestamp>-<cellar address>-<user wallet>
+	from: String!
+	to: String!
+	cellar: Cellar!
+	wallet: Wallet!
+	amount: BigInt! # unsigned
+	txId: String!  # transaction.hash.toString()
+	block: Int!     # block.number.toI32()
+	timestamp: Int! # block.timestamp.toI32()
 }
 
 type CellarDayData @entity {
-  id: ID! # timestamp at the start of a day Date.now / 86400
-  date: Int! # epoch timestamp
+	id: ID! # timestamp at the start of a day Date.now / 86400
+	date: Int! # epoch timestamp
   cellar: Cellar!
-  addedLiquidity: BigInt!
-  removedLiquidity: BigInt!
-  numWallets: Int!
+	addedLiquidity: BigInt!
+	removedLiquidity: BigInt!
+	numWallets: Int!
 }
 
 type WalletDayData @entity {
-  id: ID! # timestamp + wallet address
+	id: ID! # timestamp + wallet address
   date: Int! #epoch timestamp
   wallet: Wallet!
-  addedLiquidity: BigInt!
-  removedLiquidity: BigInt!
+	addedLiquidity: BigInt!
+	removedLiquidity: BigInt!
 }
 
 type Denom @entity {
-  id: ID! # denom token contract address
-  symbol: String!
-  decimals: Int!
+	id: ID! # denom token contract address
+	symbol: String!
+	decimals: Int!
 }
 
 type AddRemoveEvent @entity {
-  id: ID! # timestamp + wallet address
-  cellar: Cellar! # to/from depending on whether it's add or remove
-  wallet: Wallet! # from/to
-  amount: BigInt! # signed
-  txId: String! # transaction.hash.toString()
-  block: Int! # block.number.toI32()
-  timestamp: Int! # block.timestamp.toI32()
+	id: ID!         # timestamp + wallet address
+	cellar: Cellar! # to/from depending on whether it's add or remove
+	wallet: Wallet! # from/to
+	amount: BigInt! # signed
+	txId: String!  # transaction.hash.toString()
+	block: Int!     # block.number.toI32()
+	timestamp: Int! # block.timestamp.toI32()
 }
 
 type DepositWithdrawEvent @entity {
-  id: ID! # transaction hash
-  cellar: Cellar! # to/from depending on whether it's add or remove
-  amount: BigInt! # signed
-  txId: String! # transaction.hash.toString()
-  block: Int! # block.number.toI32()
-  timestamp: Int! # block.timestamp.toI32()
+	id: ID!         # timestamp + wallet address
+	cellar: Cellar! # to/from depending on whether it's add or remove
+	amount: BigInt! # signed
+	txId: String!  # transaction.hash.toString()
+	block: Int!     # block.number.toI32()
+	timestamp: Int! # block.timestamp.toI32()
 }
