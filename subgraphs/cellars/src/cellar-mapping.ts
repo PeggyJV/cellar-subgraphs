@@ -1,7 +1,3 @@
-/**
- * @param  {CellarAddLiquidity} event
- * @returns void
- */
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   CellarAddLiquidity,
@@ -26,12 +22,11 @@ import {
   loadWalletDayData,
 } from "./utils/helpers";
 
-import { seed } from "./utils/mock-data";
 
 export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   // Cellar
   const cellarAddress = event.address;
-  let cellar: Cellar = loadCellar(cellarAddress);
+  const cellar: Cellar = loadCellar(cellarAddress);
 
   // Log cellar statistics
   const amount = event.params.amount;
@@ -52,11 +47,11 @@ export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
 
   // Log cellar timeseries data
   const timestamp: BigInt = event.block.timestamp;
-  let cellarDayData: CellarDayData = loadCellarDayData(cellar, timestamp);
+  const cellarDayData: CellarDayData = loadCellarDayData(cellar, timestamp);
   cellarDayData.addedLiquidity = cellarDayData.addedLiquidity.plus(amount);
 
   // Log wallet (user) timeseries data
-  let walletDayData: WalletDayData = loadWalletDayData(wallet, timestamp);
+  const walletDayData: WalletDayData = loadWalletDayData(wallet, timestamp);
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(amount);
 
   // Log the actual CellarAddLiquidity event
@@ -80,7 +75,7 @@ export function handleCellarRemoveLiquidity(
 ): void {
   // cellar
   const cellarAddress: Address = event.address;
-  let cellar = loadCellar(cellarAddress);
+  const cellar = loadCellar(cellarAddress);
 
   // removedLiquidityAllTime
   const liqAmount = event.params.amount;
@@ -92,7 +87,7 @@ export function handleCellarRemoveLiquidity(
 
   // cellarDayData - Log cellar timeseries data
   const timestamp: BigInt = event.block.timestamp;
-  let cellarDayData: CellarDayData = loadCellarDayData(cellar, timestamp);
+  const cellarDayData: CellarDayData = loadCellarDayData(cellar, timestamp);
   cellarDayData.removedLiquidity = cellarDayData.removedLiquidity.plus(
     liqAmount
   );
@@ -112,7 +107,7 @@ export function handleCellarRemoveLiquidity(
   }
 
   //walletDayData - Log wallet (user) timeseries data
-  let walletDayData: WalletDayData = loadWalletDayData(wallet, timestamp);
+  const walletDayData: WalletDayData = loadWalletDayData(wallet, timestamp);
   walletDayData.removedLiquidity = walletDayData.removedLiquidity.plus(
     liqAmount
   );
@@ -138,7 +133,7 @@ export function handleCellarDeposit(event: CellarDeposit): void {
 
   // cellar
   const cellarAddress: Address = event.address;
-  let cellar = loadCellar(cellarAddress);
+  const cellar = loadCellar(cellarAddress);
   cellar.tvlActive = cellar.tvlActive.plus(depositAmount);
   cellar.tvlInactive = cellar.tvlInactive.minus(depositAmount);
   cellar.save();
@@ -159,7 +154,7 @@ export function handleCellarWithdraw(event: CellarWithdraw): void {
 
   // cellar
   const cellarAddress: Address = event.address;
-  let cellar = loadCellar(cellarAddress);
+  const cellar = loadCellar(cellarAddress);
   cellar.tvlActive = cellar.tvlActive.minus(withdrawAmount);
   cellar.tvlInactive = cellar.tvlInactive.plus(withdrawAmount);
   cellar.save();
@@ -180,8 +175,8 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
   const from: Address = event.params.from;
   const to: Address = event.params.to;
 
-  let isMint: boolean = to == Address.zero() && from != Address.zero();
-  let isBurn: boolean = from == Address.zero() && to != Address.zero();
+  const isMint: boolean = to == Address.zero() && from != Address.zero();
+  const isBurn: boolean = from == Address.zero() && to != Address.zero();
 
   if (isMint) {
     /* From ERC20.sol 
