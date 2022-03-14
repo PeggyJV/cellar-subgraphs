@@ -171,17 +171,26 @@ export function initCellarShareTransfer(args: {
   return cellarShareTransfer
 }
 
+export function createAddRemoveEvent(args: {
+  blockTimestamp: BigInt;
+  cellarAddress: string;
+  walletAddress: string;
+  amount: BigInt;
+  txId: string;
+  blockNumber: BigInt;
+}): AddRemoveEvent {
+  const id = args.blockTimestamp
     .toString()
     .concat(ID_DELIMITER)
-    .concat(walletAddress);
+    .concat(args.walletAddress);
   const event = new AddRemoveEvent(id);
 
-  event.cellar = cellarAddress;
-  event.wallet = walletAddress;
-  event.amount = amount;
-  event.txId = txId;
-  event.block = blockNumber.toI32();
-  event.timestamp = blockTimestamp.toI32();
+  event.cellar = args.cellarAddress;
+  event.wallet = args.walletAddress;
+  event.amount = args.amount;
+  event.txId = args.txId;
+  event.block = args.blockNumber.toI32();
+  event.timestamp = args.blockTimestamp.toI32();
   event.save();
 
   return event;
