@@ -179,31 +179,59 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
   const isMint: boolean = from == Address.zero() && to != Address.zero();
   const isBurn: boolean = to == Address.zero() && from != Address.zero();
 
+  // Init cellar
+  const cellarAddress: Address = event.address;
+  const cellar = loadCellar(cellarAddress)
+
   if (isMint) {
     /* From ERC20.sol 
-    ```solidity
-    function _mint(address to, uint256 amount) {
-      totalSupply += amount;
-      balanceOf[to] += amount;
-      emit Transfer(address(0), to, amount)
+     ```solidity
+     event Transfer(address indexed from, address indexed to, uint256 amount);
+ 
+     function _mint(address to, uint256 amount) {
+       totalSupply += amount;
+       balanceOf[to] += amount;
+       emit Transfer(address(0), to, amount)
+     }
+     ```
+     */
+
+    // Init wallet 
+    const walletAddress: string = to.toHexString();
+    let wallet = Wallet.load(walletAddress); 
+    if (wallet == null) {
+      // Create a new wallet if we haven't seen it before
+      wallet = new Wallet(walletAddress);
+      wallet.save();
+      cellar.numWalletsAllTime += 1;
+      cellar.numWalletsActive += 1;
+      cellar.save();
     }
-    ```
 
-    TODO Update 'CellarShare'. 
-    If this object exists for the corresponding wallet, simply update the 
-      wallet's CellarShare.balance -> Add it.
-    If is doesn't already exist, initialize a cellarShare.
-      Q: Do I need to save the cellarShare like I did the cellar in the other 
-        handlers?
-      Q: More broadly, what does the `object.save()` call do in any handler?
-    */
-    const walletAddress: Address = from;
-    const cellarAddress: Address = event.address;
-    // Switch to correct ABI.
+    // Init cellarShare
+    const cellarShare: CellarShare = loadCellarShare(wallet, cellar);
+    cellarShare.balance = cellarShare.balance.plus(transferAmount);
+    cellarShare.save();
 
+    // cellarsharetransfer
+    const timestamp: BigInt = event.block.timestamp;
+    const txHash: string = event.transaction.hash.toString();
+    const cellarShareTransfer: CellarShareTransfer = initCellarShareTransfer({
+      from: from.toHexString(), 
+      to: to.toHexString(),
+      cellar: cellar, 
+      wallet: wallet, 
+      amount: transferAmount, 
+      txHash: txHash, 
+      block: event.block.number, 
+      timestamp: timestamp, 
+    })
+    cellarShareTransfer.save();
 
   } else if (isBurn) {
     /* From ERC20.sol 
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+
     ```solidity
     function _burn(address from, uint256 amount) {
       balanceOf[from] -= amount;
@@ -211,16 +239,41 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
       emit Transfer(from, address(0), amount)
     }
     ```
-
-    TODO Update 'CellarShare'. 
-    If this object exists for the corresponding wallet, simply update the 
-      wallet's CellarShare.balance -> Add it.
-    If is doesn't already exist, initialize a cellarShare.
-      Q: Do I need to save the cellarShare like I did the cellar in the other 
-        handlers?
-      Q: More broadly, what does the `object.save()` call do in any handler?
     */
+    const walletAddress: string = from.toHexString();
+    let wallet = Wallet.load(walletAddress); 
+    if (wallet == null) {
+      // Create a new wallet if we haven't seen it before
+      wallet = new Wallet(walletAddress);
+      wallet.save();
+      cellar.numWalletsAllTime += 1;
+      cellar.numWalletsActive += 1;
+    }
+
+    // Init cellarShare
+    const cellarShare: CellarShare = loadCellarShare(wallet, cellar);
+    cellarShare.balance = cellarShare.balance.minus(transferAmount);
+    if (cellarShare.balance == ZERO_BI) {
+      // Lower the 'numWallets' of the cellar in the case balance is zero.
+      cellar.numWalletsActive -= 1;
+      cellar.save();
+    }
+    cellarShare.save();
     
+    // cellarsharetransfer
+    const timestamp: BigInt = event.block.timestamp;
+    const txHash: string = event.transaction.hash.toString();
+    const cellarShareTransfer: CellarShareTransfer = initCellarShareTransfer({
+      from: from.toHexString(), 
+      to: to.toHexString(),
+      cellar: cellar, 
+      wallet: wallet, 
+      amount: transferAmount, 
+      txHash: txHash, 
+      block: event.block.number, 
+      timestamp: timestamp, 
+    })
+    cellarShareTransfer.save();
   } else {
     // TransferEvent is neither a mint nor a burn.
   }
