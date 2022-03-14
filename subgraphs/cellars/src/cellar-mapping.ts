@@ -176,8 +176,8 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
   const from: Address = event.params.from;
   const to: Address = event.params.to;
 
-  const isMint: boolean = to == Address.zero() && from != Address.zero();
-  const isBurn: boolean = from == Address.zero() && to != Address.zero();
+  const isMint: boolean = from == Address.zero() && to != Address.zero();
+  const isBurn: boolean = to == Address.zero() && from != Address.zero();
 
   if (isMint) {
     /* From ERC20.sol 
