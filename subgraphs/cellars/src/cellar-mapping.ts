@@ -1,4 +1,3 @@
-import { Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   CellarAddLiquidity,
   CellarDeposit,
@@ -6,15 +5,7 @@ import {
   CellarWithdraw,
   Transfer as CellarShareTransferEvent,
 } from "../generated/Cellar/Cellar";
-import {
-  Cellar,
-  CellarDayData,
-  CellarShare,
-  CellarShareTransfer,
-  Wallet,
-  WalletDayData,
-} from "../generated/schema";
-
+import { Wallet } from "../generated/schema";
 import {
   createAddRemoveEvent,
   createDepositWithdrawEvent,
@@ -23,14 +14,14 @@ import {
   loadCellarShare,
   loadWalletDayData,
   initCellarShareTransfer,
-  ZERO_BI
+  ZERO_BI,
 } from "./utils/helpers";
-
+import { Address } from "@graphprotocol/graph-ts";
 
 export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   // Cellar
   const cellarAddress = event.address;
-  const cellar: Cellar = loadCellar(cellarAddress);
+  const cellar = loadCellar(cellarAddress);
 
   // Log cellar statistics
   const liqAmount = event.params.amount;
@@ -50,23 +41,23 @@ export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   }
 
   // Log cellar timeseries data
-  const timestamp: BigInt = event.block.timestamp;
-  const cellarDayData: CellarDayData = loadCellarDayData(cellar, timestamp);
+  const timestamp = event.block.timestamp;
+  const cellarDayData = loadCellarDayData(cellar, timestamp);
   cellarDayData.addedLiquidity = cellarDayData.addedLiquidity.plus(liqAmount);
 
   // Log wallet (user) timeseries data
-  const walletDayData: WalletDayData = loadWalletDayData(wallet, timestamp);
+  const walletDayData = loadWalletDayData(wallet, timestamp);
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(liqAmount);
 
   // Log the actual CellarAddLiquidity event
-  createAddRemoveEvent({
-    blockTimestamp: timestamp,
-    cellarAddress: cellar.id,
-    walletAddress: wallet.id,
-    amount: liqAmount,
-    txId: event.transaction.hash.toHexString(),
-    blockNumber: event.block.number,
-  });
+  createAddRemoveEvent(
+    timestamp,
+    cellar.id,
+    wallet.id,
+    liqAmount,
+    event.transaction.hash.toHexString(),
+    event.block.number
+  );
 
   // Save the entities we've modified
   cellar.save();
@@ -78,26 +69,24 @@ export function handleCellarRemoveLiquidity(
   event: CellarRemoveLiquidity
 ): void {
   // cellar
-  const cellarAddress: Address = event.address;
+  const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
 
   // removedLiquidityAllTime
   const liqAmount = event.params.amount;
-  cellar.removedLiquidityAllTime = cellar.removedLiquidityAllTime.plus(
-    liqAmount
-  );
+  cellar.removedLiquidityAllTime =
+    cellar.removedLiquidityAllTime.plus(liqAmount);
   cellar.tvlInactive = cellar.tvlInactive.minus(liqAmount);
   cellar.tvlTotal = cellar.tvlTotal.minus(liqAmount);
 
   // cellarDayData - Log cellar timeseries data
-  const timestamp: BigInt = event.block.timestamp;
-  const cellarDayData: CellarDayData = loadCellarDayData(cellar, timestamp);
-  cellarDayData.removedLiquidity = cellarDayData.removedLiquidity.plus(
-    liqAmount
-  );
+  const timestamp = event.block.timestamp;
+  const cellarDayData = loadCellarDayData(cellar, timestamp);
+  cellarDayData.removedLiquidity =
+    cellarDayData.removedLiquidity.plus(liqAmount);
 
   // Wallet
-  const walletAddress: string = event.params.address.toHexString();
+  const walletAddress = event.params.address.toHexString();
   let wallet = Wallet.load(walletAddress);
   if (wallet == null) {
     // Create a new wallet if we haven't seen it before
@@ -108,20 +97,19 @@ export function handleCellarRemoveLiquidity(
   }
 
   //walletDayData - Log wallet (user) timeseries data
-  const walletDayData: WalletDayData = loadWalletDayData(wallet, timestamp);
-  walletDayData.removedLiquidity = walletDayData.removedLiquidity.plus(
-    liqAmount
-  );
+  const walletDayData = loadWalletDayData(wallet, timestamp);
+  walletDayData.removedLiquidity =
+    walletDayData.removedLiquidity.plus(liqAmount);
 
   // Log the event, cellarRemoveLiquidity, as `AddRemoveEvent`
-  createAddRemoveEvent( {
-    blockTimestamp: timestamp,
-    cellarAddress: cellar.id,
-    walletAddress: wallet.id,
-    amount: liqAmount.neg(),
-    txId: event.transaction.hash.toHexString(),
-    blockNumber: event.block.number,
-  });
+  createAddRemoveEvent(
+    timestamp,
+    cellar.id,
+    wallet.id,
+    liqAmount.neg(),
+    event.transaction.hash.toHexString(),
+    event.block.number
+  );
 
   // Save entities we've modified
   cellar.save();
@@ -130,10 +118,10 @@ export function handleCellarRemoveLiquidity(
 }
 
 export function handleCellarDeposit(event: CellarDeposit): void {
-  const depositAmount: BigInt = event.params.amount;
+  const depositAmount = event.params.amount;
 
   // cellar
-  const cellarAddress: Address = event.address;
+  const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
   cellar.tvlActive = cellar.tvlActive.plus(depositAmount);
   cellar.tvlInactive = cellar.tvlInactive.minus(depositAmount);
@@ -141,20 +129,20 @@ export function handleCellarDeposit(event: CellarDeposit): void {
 
   // createDepositWithdrawEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawEvent({
-    blockTimestamp: timestamp,
-    cellarAddress: cellar.id,
-    amount: depositAmount,
-    txId: event.transaction.hash.toHexString(),
-    blockNumber: event.block.number,
-  });
+  createDepositWithdrawEvent(
+    timestamp,
+    cellar.id,
+    depositAmount,
+    event.transaction.hash.toHexString(),
+    event.block.number
+  );
 }
 
 export function handleCellarWithdraw(event: CellarWithdraw): void {
-  const withdrawAmount: BigInt = event.params.amount;
+  const withdrawAmount = event.params.amount;
 
   // cellar
-  const cellarAddress: Address = event.address;
+  const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
   cellar.tvlActive = cellar.tvlActive.minus(withdrawAmount);
   cellar.tvlInactive = cellar.tvlInactive.plus(withdrawAmount);
@@ -162,32 +150,32 @@ export function handleCellarWithdraw(event: CellarWithdraw): void {
 
   // createDepositWithdrawEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawEvent({
-    blockTimestamp: timestamp,
-    cellarAddress: cellar.id,
-    amount: withdrawAmount.neg(),
-    txId: event.transaction.hash.toHexString(),
-    blockNumber: event.block.number,
-  });
+  createDepositWithdrawEvent(
+    timestamp,
+    cellar.id,
+    withdrawAmount.neg(),
+    event.transaction.hash.toHexString(),
+    event.block.number
+  );
 }
 
 export function handleTransfer(event: CellarShareTransferEvent): void {
-  const transferAmount: BigInt = event.params.value;
-  const from: Address = event.params.from;
-  const to: Address = event.params.to;
+  const transferAmount = event.params.value;
+  const from = event.params.from;
+  const to = event.params.to;
 
-  const isMint: boolean = from == Address.zero() && to != Address.zero();
-  const isBurn: boolean = to == Address.zero() && from != Address.zero();
+  const isMint = from == Address.zero() && to != Address.zero();
+  const isBurn = to == Address.zero() && from != Address.zero();
 
   // Init cellar
-  const cellarAddress: Address = event.address;
-  const cellar = loadCellar(cellarAddress)
+  const cellarAddress = event.address;
+  const cellar = loadCellar(cellarAddress);
 
   if (isMint) {
-    /* From ERC20.sol 
+    /* From ERC20.sol
      ```solidity
      event Transfer(address indexed from, address indexed to, uint256 amount);
- 
+
      function _mint(address to, uint256 amount) {
        totalSupply += amount;
        balanceOf[to] += amount;
@@ -196,9 +184,9 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
      ```
      */
 
-    // Init wallet 
-    const walletAddress: string = to.toHexString();
-    let wallet = Wallet.load(walletAddress); 
+    // Init wallet
+    const walletAddress = to.toHexString();
+    let wallet = Wallet.load(walletAddress);
     if (wallet == null) {
       // Create a new wallet if we haven't seen it before
       wallet = new Wallet(walletAddress);
@@ -209,27 +197,26 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
     }
 
     // Init cellarShare
-    const cellarShare: CellarShare = loadCellarShare(wallet, cellar);
+    const cellarShare = loadCellarShare(wallet, cellar);
     cellarShare.balance = cellarShare.balance.plus(transferAmount);
     cellarShare.save();
 
     // cellarsharetransfer
-    const timestamp: BigInt = event.block.timestamp;
-    const txHash: string = event.transaction.hash.toString();
-    const cellarShareTransfer: CellarShareTransfer = initCellarShareTransfer({
-      from: from.toHexString(), 
-      to: to.toHexString(),
-      cellar: cellar, 
-      wallet: wallet, 
-      amount: transferAmount, 
-      txHash: txHash, 
-      block: event.block.number, 
-      timestamp: timestamp, 
-    })
+    const timestamp = event.block.timestamp;
+    const txHash = event.transaction.hash.toHexString();
+    const cellarShareTransfer = initCellarShareTransfer(
+      from.toHexString(),
+      to.toHexString(),
+      cellar,
+      wallet,
+      transferAmount,
+      event.block.number,
+      txHash,
+      timestamp
+    );
     cellarShareTransfer.save();
-
   } else if (isBurn) {
-    /* From ERC20.sol 
+    /* From ERC20.sol
     event Transfer(address indexed from, address indexed to, uint256 amount);
 
     ```solidity
@@ -240,8 +227,8 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
     }
     ```
     */
-    const walletAddress: string = from.toHexString();
-    let wallet = Wallet.load(walletAddress); 
+    const walletAddress = from.toHexString();
+    let wallet = Wallet.load(walletAddress);
     if (wallet == null) {
       // Create a new wallet if we haven't seen it before
       wallet = new Wallet(walletAddress);
@@ -251,7 +238,7 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
     }
 
     // Init cellarShare
-    const cellarShare: CellarShare = loadCellarShare(wallet, cellar);
+    const cellarShare = loadCellarShare(wallet, cellar);
     cellarShare.balance = cellarShare.balance.minus(transferAmount);
     if (cellarShare.balance == ZERO_BI) {
       // Lower the 'numWallets' of the cellar in the case balance is zero.
@@ -259,20 +246,21 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
       cellar.save();
     }
     cellarShare.save();
-    
+
     // cellarsharetransfer
-    const timestamp: BigInt = event.block.timestamp;
-    const txHash: string = event.transaction.hash.toString();
-    const cellarShareTransfer: CellarShareTransfer = initCellarShareTransfer({
-      from: from.toHexString(), 
-      to: to.toHexString(),
-      cellar: cellar, 
-      wallet: wallet, 
-      amount: transferAmount, 
-      txHash: txHash, 
-      block: event.block.number, 
-      timestamp: timestamp, 
-    })
+    const timestamp = event.block.timestamp;
+    const txHash = event.transaction.hash.toHexString();
+    const cellarShareTransfer = initCellarShareTransfer(
+      from.toHexString(),
+      to.toHexString(),
+      cellar,
+      wallet,
+      transferAmount,
+      event.block.number,
+      txHash,
+      timestamp
+    );
+
     cellarShareTransfer.save();
   } else {
     // TransferEvent is neither a mint nor a burn.
