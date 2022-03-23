@@ -5,6 +5,7 @@ import {
   Cellar,
   CellarDayData,
   CellarShare,
+  CellarShareTransfer,
   DepositWithdrawEvent,
   Wallet,
   WalletDayData,
@@ -143,26 +144,53 @@ export function loadCellarShare(wallet: Wallet, cellar: Cellar): CellarShare {
   return cellarShare;
 }
 
-export function createAddRemoveEvent(
-  blockTimestamp: BigInt,
-  cellarAddress: string,
-  walletAddress: string,
-  amount: BigInt,
-  txId: string,
-  blockNumber: BigInt
-): AddRemoveEvent {
-  const id = blockTimestamp
+export function initCellarShareTransfer(args: { 
+  from: string;
+  to: string;
+  cellar: Cellar
+  wallet: Wallet
+  amount: BigInt;
+  txHash: string;
+  block: BigInt;
+  timestamp: BigInt;
+}): CellarShareTransfer {
+  const id = args.timestamp.toString()
+    .concat(ID_DELIMITER).concat(args.cellar.id)
+    .concat(ID_DELIMITER).concat(args.wallet.id);
+
+  const cellarShareTransfer = new CellarShareTransfer(id);
+  cellarShareTransfer.from = args.from;
+  cellarShareTransfer.to = args.to;
+  cellarShareTransfer.cellar = args.cellar.id;
+  cellarShareTransfer.wallet = args.wallet.id;
+  cellarShareTransfer.amount = args.amount;
+  cellarShareTransfer.txId = args.txHash;
+  cellarShareTransfer.block = parseInt(args.block.toString());
+  cellarShareTransfer.timestamp = parseInt(args.timestamp.toString());
+    
+  return cellarShareTransfer
+}
+
+export function createAddRemoveEvent(args: {
+  blockTimestamp: BigInt;
+  cellarAddress: string;
+  walletAddress: string;
+  amount: BigInt;
+  txId: string;
+  blockNumber: BigInt;
+}): AddRemoveEvent {
+  const id = args.blockTimestamp
     .toString()
     .concat(ID_DELIMITER)
-    .concat(walletAddress);
+    .concat(args.walletAddress);
   const event = new AddRemoveEvent(id);
 
-  event.cellar = cellarAddress;
-  event.wallet = walletAddress;
-  event.amount = amount;
-  event.txId = txId;
-  event.block = blockNumber.toI32();
-  event.timestamp = blockTimestamp.toI32();
+  event.cellar = args.cellarAddress;
+  event.wallet = args.walletAddress;
+  event.amount = args.amount;
+  event.txId = args.txId;
+  event.block = args.blockNumber.toI32();
+  event.timestamp = args.blockTimestamp.toI32();
   event.save();
 
   return event;
