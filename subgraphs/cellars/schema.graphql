@@ -39,7 +39,7 @@ type CellarShareTransfer @entity {
   cellar: Cellar!
   wallet: Wallet!
   amount: BigInt! # unsigned
-  txId: String! # transaction.hash.toString()
+  txId: String! # transaction.hash.toHexString()
   block: Int! # block.number.toI32()
   timestamp: Int! # block.timestamp.toI32()
 }
@@ -72,7 +72,7 @@ type AddRemoveEvent @entity {
   cellar: Cellar! # to/from depending on whether it's add or remove
   wallet: Wallet! # from/to
   amount: BigInt! # signed
-  txId: String! # transaction.hash.toString()
+  txId: String! # transaction.hash.toHexString()
   block: Int! # block.number.toI32()
   timestamp: Int! # block.timestamp.toI32()
 }
@@ -81,7 +81,7 @@ type DepositWithdrawEvent @entity {
   id: ID! # transaction hash
   cellar: Cellar! # to/from depending on whether it's add or remove
   amount: BigInt! # signed
-  txId: String! # transaction.hash.toString()
+  txId: String! # transaction.hash.toHexString()
   block: Int! # block.number.toI32()
   timestamp: Int! # block.timestamp.toI32()
 }

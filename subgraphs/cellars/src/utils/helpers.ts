@@ -1,4 +1,3 @@
-import { Address, BigInt } from "@graphprotocol/graph-ts";
 import { Cellar as CellarContract } from "../../generated/Cellar/Cellar";
 import {
   AddRemoveEvent,
@@ -10,6 +9,7 @@ import {
   Wallet,
   WalletDayData,
 } from "../../generated/schema";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 
 export const ID_DELIMITER = "-";
 export const ZERO_BI = BigInt.fromI32(0);
@@ -65,10 +65,7 @@ export function loadCellarDayData(
   blockTimestamp: BigInt
 ): CellarDayData {
   const date = (blockTimestamp.toI32() / DAY_SECONDS) * DAY_SECONDS;
-  const id = date
-    .toString()
-    .concat(ID_DELIMITER)
-    .concat(cellar.id);
+  const id = date.toString().concat(ID_DELIMITER).concat(cellar.id);
 
   let cellarDayData = CellarDayData.load(id);
   if (cellarDayData == null) {
@@ -98,10 +95,7 @@ export function loadWalletDayData(
   blockTimestamp: BigInt
 ): WalletDayData {
   const date = (blockTimestamp.toI32() / DAY_SECONDS) * DAY_SECONDS;
-  const id = date
-    .toString()
-    .concat(ID_DELIMITER)
-    .concat(wallet.id);
+  const id = date.toString().concat(ID_DELIMITER).concat(wallet.id);
 
   let walletDayData = WalletDayData.load(id);
   if (walletDayData == null) {
@@ -117,13 +111,14 @@ export function loadWalletDayData(
  * @returns CellarShare
  */
 export function initCellarShare(cellar: Cellar, wallet: Wallet): CellarShare {
-  const cellarShareID: string = wallet.id + "-" + cellar.id;
-  const balanceInit: BigInt = ZERO_BI;
+  const cellarShareID = wallet.id + "-" + cellar.id;
+  const balanceInit = ZERO_BI;
 
   let cellarShare = new CellarShare(cellarShareID);
   cellarShare.wallet = wallet.id;
   cellarShare.cellar = cellar.id;
   cellarShare.balance = balanceInit;
+
   return cellarShare;
 }
 
@@ -133,85 +128,89 @@ export function initCellarShare(cellar: Cellar, wallet: Wallet): CellarShare {
  * @returns CellarShare
  */
 export function loadCellarShare(wallet: Wallet, cellar: Cellar): CellarShare {
-  const walletID: string = wallet.id;
-  const cellarID: string = cellar.id;
-  const cellarShareID: string = walletID + "-" + cellarID;
+  const walletID = wallet.id;
+  const cellarID = cellar.id;
+  const cellarShareID = walletID + "-" + cellarID;
 
   let cellarShare = CellarShare.load(cellarShareID);
   if (cellarShare == null) {
     cellarShare = initCellarShare(cellar, wallet);
   }
+
   return cellarShare;
 }
 
-export function initCellarShareTransfer(args: { 
-  from: string;
-  to: string;
-  cellar: Cellar
-  wallet: Wallet
-  amount: BigInt;
-  txHash: string;
-  block: BigInt;
-  timestamp: BigInt;
-}): CellarShareTransfer {
-  const id = args.timestamp.toString()
-    .concat(ID_DELIMITER).concat(args.cellar.id)
-    .concat(ID_DELIMITER).concat(args.wallet.id);
-
-  const cellarShareTransfer = new CellarShareTransfer(id);
-  cellarShareTransfer.from = args.from;
-  cellarShareTransfer.to = args.to;
-  cellarShareTransfer.cellar = args.cellar.id;
-  cellarShareTransfer.wallet = args.wallet.id;
-  cellarShareTransfer.amount = args.amount;
-  cellarShareTransfer.txId = args.txHash;
-  cellarShareTransfer.block = parseInt(args.block.toString());
-  cellarShareTransfer.timestamp = parseInt(args.timestamp.toString());
-    
-  return cellarShareTransfer
-}
-
-export function createAddRemoveEvent(args: {
-  blockTimestamp: BigInt;
-  cellarAddress: string;
-  walletAddress: string;
-  amount: BigInt;
-  txId: string;
-  blockNumber: BigInt;
-}): AddRemoveEvent {
-  const id = args.blockTimestamp
+export function initCellarShareTransfer(
+  from: string,
+  to: string,
+  cellar: Cellar,
+  wallet: Wallet,
+  amount: BigInt,
+  block: BigInt,
+  txId: string,
+  timestamp: BigInt
+): CellarShareTransfer {
+  const id = timestamp
     .toString()
     .concat(ID_DELIMITER)
-    .concat(args.walletAddress);
+    .concat(cellar.id)
+    .concat(ID_DELIMITER)
+    .concat(wallet.id);
+
+  const cellarShareTransfer = new CellarShareTransfer(id);
+  cellarShareTransfer.from = from;
+  cellarShareTransfer.to = to;
+  cellarShareTransfer.cellar = cellar.id;
+  cellarShareTransfer.wallet = wallet.id;
+  cellarShareTransfer.amount = amount;
+  cellarShareTransfer.txId = txId;
+  cellarShareTransfer.block = block.toI32();
+  cellarShareTransfer.timestamp = timestamp.toI32();
+
+  return cellarShareTransfer;
+}
+
+export function createAddRemoveEvent(
+  blockTimestamp: BigInt,
+  cellarAddress: string,
+  walletAddress: string,
+  amount: BigInt,
+  txId: string,
+  blockNumber: BigInt
+): AddRemoveEvent {
+  const id = blockTimestamp
+    .toString()
+    .concat(ID_DELIMITER)
+    .concat(walletAddress);
   const event = new AddRemoveEvent(id);
 
-  event.cellar = args.cellarAddress;
-  event.wallet = args.walletAddress;
-  event.amount = args.amount;
-  event.txId = args.txId;
-  event.block = args.blockNumber.toI32();
-  event.timestamp = args.blockTimestamp.toI32();
+  event.cellar = cellarAddress;
+  event.wallet = walletAddress;
+  event.amount = amount;
+  event.txId = txId;
+  event.block = blockNumber.toI32();
+  event.timestamp = blockTimestamp.toI32();
   event.save();
 
   return event;
 }
 
-export function createDepositWithdrawEvent(args: {
-  blockTimestamp: BigInt;
-  cellarAddress: string;
-  amount: BigInt;
-  txId: string;
-  blockNumber: BigInt;
-}): DepositWithdrawEvent {
+export function createDepositWithdrawEvent(
+  blockTimestamp: BigInt,
+  cellarAddress: string,
+  amount: BigInt,
+  txId: string,
+  blockNumber: BigInt
+): DepositWithdrawEvent {
   // id: txId
-  const id = args.txId;
+  const id = txId;
   const event = new DepositWithdrawEvent(id);
 
-  event.cellar = args.cellarAddress;
-  event.amount = args.amount;
-  event.txId = args.txId;
-  event.block = args.blockNumber.toI32();
-  event.timestamp = args.blockTimestamp.toI32();
+  event.cellar = cellarAddress;
+  event.amount = amount;
+  event.txId = txId;
+  event.block = blockNumber.toI32();
+  event.timestamp = blockTimestamp.toI32();
   event.save();
 
   return event;
