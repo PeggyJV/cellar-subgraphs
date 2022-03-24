@@ -26,7 +26,7 @@ dataSources:
         - DepositWithdrawEvent
       abis:
         - name: Cellar
-          file: ../../node_modules/@sommelier/abis/src/aave-stablecoin-cellar.json
+          file: ../../node_modules/@sommelier/abis/src/AaveV2StablecoinCellar.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
