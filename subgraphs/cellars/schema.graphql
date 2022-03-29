@@ -10,7 +10,7 @@ type Wallet @entity {
 type Cellar @entity {
   id: ID! # contract address
   name: String!
-  denom: Denom! # token address
+  asset: TokenERC20! # token address
   tvlActive: BigInt!
   tvlInactive: BigInt!
   tvlTotal: BigInt!
@@ -61,8 +61,8 @@ type WalletDayData @entity {
   removedLiquidity: BigInt!
 }
 
-type Denom @entity {
-  id: ID! # denom token contract address
+type TokenERC20 @entity {
+  id: ID! # token contract address
   symbol: String!
   decimals: Int!
 }
