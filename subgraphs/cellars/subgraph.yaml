@@ -21,7 +21,7 @@ dataSources:
         - CellarShareTransfer
         - CellarDayData
         - WalletDayData
-        - Denom
+        - TokenERC20
         - AddRemoveEvent
         - DepositWithdrawEvent
       abis:
@@ -39,3 +39,31 @@ dataSources:
         - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleWithdraw
       file: ./src/cellar-mapping.ts
+  - kind: ethereum
+    name: CellarStaking
+    network: mainnet
+    source:
+      address: "0xc3761eb917cd790b30dad99f6cc5b4ff93c4f9ea" # placeholder
+      abi: CellarStaking
+      startBlock: 14332315 # placeholder
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - Cellar
+        - CellarShare
+        - CellarShareTransfer
+        - CellarDayData
+        - WalletDayData
+        - TokenERC20
+        - AddRemoveEvent
+        - DepositWithdrawEvent
+      abis:
+        - name: CellarStaking
+          file: ../../node_modules/@sommelier/abis/src/CellarStaking.json
+      eventHandlers:
+        - event: Claim(indexed address,uint256,uint256)
+          handler: handleClaim
+      file: ./src/cellar-staking-mapping.ts
