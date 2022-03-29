@@ -29,7 +29,8 @@ export function initCellar(contractAddress: Address): Cellar {
   cellar.numWalletsActive = 0;
 
   const contract = CellarContract.bind(contractAddress);
-  cellar.denom = contract.denom().toHexString();
+  cellar.asset = contract.asset().toHexString();
+  contract.asset;
 
   return cellar;
 }

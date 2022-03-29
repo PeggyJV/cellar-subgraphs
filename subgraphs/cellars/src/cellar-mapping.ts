@@ -1,8 +1,8 @@
 import {
-  CellarAddLiquidity,
-  CellarDeposit,
-  CellarRemoveLiquidity,
-  CellarWithdraw,
+  Deposit,
+  DepositToAave,
+  Withdraw,
+  WithdrawFromAave,
   Transfer as CellarShareTransferEvent,
 } from "../generated/Cellar/Cellar";
 import { Wallet } from "../generated/schema";
@@ -18,19 +18,19 @@ import {
 } from "./utils/helpers";
 import { Address } from "@graphprotocol/graph-ts";
 
-export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
+export function handleDeposit(event: Deposit): void {
   // Cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
 
   // Log cellar statistics
-  const liqAmount = event.params.amount;
+  const liqAmount = event.params.assets;
   cellar.addedLiquidityAllTime = cellar.addedLiquidityAllTime.plus(liqAmount);
   cellar.tvlInactive = cellar.tvlInactive.plus(liqAmount);
   cellar.tvlTotal = cellar.tvlTotal.plus(liqAmount);
 
   // Wallet
-  const walletAddress = event.params.address.toHexString();
+  const walletAddress = event.params.owner.toHexString();
   let wallet = Wallet.load(walletAddress);
   if (wallet == null) {
     // Create a new wallet if we haven't seen it before
@@ -49,7 +49,7 @@ export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   const walletDayData = loadWalletDayData(wallet, timestamp);
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(liqAmount);
 
-  // Log the actual CellarAddLiquidity event
+  // Log the actual Deposit event
   createAddRemoveEvent(
     timestamp,
     cellar.id,
@@ -65,15 +65,13 @@ export function handleCellarAddLiquidty(event: CellarAddLiquidity): void {
   walletDayData.save();
 }
 
-export function handleCellarRemoveLiquidity(
-  event: CellarRemoveLiquidity
-): void {
+export function handleWithdraw(event: Withdraw): void {
   // cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
 
   // removedLiquidityAllTime
-  const liqAmount = event.params.amount;
+  const liqAmount = event.params.assets;
   cellar.removedLiquidityAllTime =
     cellar.removedLiquidityAllTime.plus(liqAmount);
   cellar.tvlInactive = cellar.tvlInactive.minus(liqAmount);
@@ -86,7 +84,7 @@ export function handleCellarRemoveLiquidity(
     cellarDayData.removedLiquidity.plus(liqAmount);
 
   // Wallet
-  const walletAddress = event.params.address.toHexString();
+  const walletAddress = event.params.owner.toHexString();
   let wallet = Wallet.load(walletAddress);
   if (wallet == null) {
     // Create a new wallet if we haven't seen it before
@@ -117,7 +115,7 @@ export function handleCellarRemoveLiquidity(
   walletDayData.save();
 }
 
-export function handleCellarDeposit(event: CellarDeposit): void {
+export function handleDepositToAave(event: DepositToAave): void {
   const depositAmount = event.params.amount;
 
   // cellar
@@ -138,7 +136,7 @@ export function handleCellarDeposit(event: CellarDeposit): void {
   );
 }
 
-export function handleCellarWithdraw(event: CellarWithdraw): void {
+export function handleWithdrawFromAave(event: WithdrawFromAave): void {
   const withdrawAmount = event.params.amount;
 
   // cellar
@@ -160,7 +158,7 @@ export function handleCellarWithdraw(event: CellarWithdraw): void {
 }
 
 export function handleTransfer(event: CellarShareTransferEvent): void {
-  const transferAmount = event.params.value;
+  const transferAmount = event.params.amount;
   const from = event.params.from;
   const to = event.params.to;
 
