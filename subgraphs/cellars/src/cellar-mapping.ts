@@ -7,8 +7,8 @@ import {
 } from "../generated/Cellar/Cellar";
 import { Wallet } from "../generated/schema";
 import {
-  createAddRemoveEvent,
   createDepositWithdrawEvent,
+  createDepositToWithdrawFromAaveEvent,
   loadCellar,
   loadCellarDayData,
   loadCellarShare,
@@ -50,7 +50,7 @@ export function handleDeposit(event: Deposit): void {
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(liqAmount);
 
   // Log the actual Deposit event
-  createAddRemoveEvent(
+  createDepositWithdrawEvent(
     timestamp,
     cellar.id,
     wallet.id,
@@ -99,8 +99,8 @@ export function handleWithdraw(event: Withdraw): void {
   walletDayData.removedLiquidity =
     walletDayData.removedLiquidity.plus(liqAmount);
 
-  // Log the event, cellarRemoveLiquidity, as `AddRemoveEvent`
-  createAddRemoveEvent(
+  // Log the event, cellarRemoveLiquidity, as `DepositWithdrawEvent`
+  createDepositWithdrawEvent(
     timestamp,
     cellar.id,
     wallet.id,
@@ -125,9 +125,9 @@ export function handleDepositToAave(event: DepositToAave): void {
   cellar.tvlInactive = cellar.tvlInactive.minus(depositAmount);
   cellar.save();
 
-  // createDepositWithdrawEvent
+  // createAaveDepositWithdrawEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawEvent(
+  createDepositToWithdrawFromAaveEvent(
     timestamp,
     cellar.id,
     depositAmount,
@@ -146,9 +146,9 @@ export function handleWithdrawFromAave(event: WithdrawFromAave): void {
   cellar.tvlInactive = cellar.tvlInactive.plus(withdrawAmount);
   cellar.save();
 
-  // createDepositWithdrawEvent
+  // createEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawEvent(
+  createDepositToWithdrawFromAaveEvent(
     timestamp,
     cellar.id,
     withdrawAmount.neg(),

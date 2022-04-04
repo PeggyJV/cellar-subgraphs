@@ -1,11 +1,11 @@
 import { Cellar as CellarContract } from "../../generated/Cellar/Cellar";
 import {
-  AddRemoveEvent,
+  DepositWithdrawEvent,
   Cellar,
   CellarDayData,
   CellarShare,
   CellarShareTransfer,
-  DepositWithdrawEvent,
+  AaveDepositWithdrawEvent,
   Wallet,
   WalletDayData,
 } from "../../generated/schema";
@@ -171,19 +171,19 @@ export function initCellarShareTransfer(
   return cellarShareTransfer;
 }
 
-export function createAddRemoveEvent(
+export function createDepositWithdrawEvent(
   blockTimestamp: BigInt,
   cellarAddress: string,
   walletAddress: string,
   amount: BigInt,
   txId: string,
   blockNumber: BigInt
-): AddRemoveEvent {
+): DepositWithdrawEvent {
   const id = blockTimestamp
     .toString()
     .concat(ID_DELIMITER)
     .concat(walletAddress);
-  const event = new AddRemoveEvent(id);
+  const event = new DepositWithdrawEvent(id);
 
   event.cellar = cellarAddress;
   event.wallet = walletAddress;
@@ -196,16 +196,16 @@ export function createAddRemoveEvent(
   return event;
 }
 
-export function createDepositWithdrawEvent(
+export function createDepositToWithdrawFromAaveEvent(
   blockTimestamp: BigInt,
   cellarAddress: string,
   amount: BigInt,
   txId: string,
   blockNumber: BigInt
-): DepositWithdrawEvent {
+): AaveDepositWithdrawEvent {
   // id: txId
   const id = txId;
-  const event = new DepositWithdrawEvent(id);
+  const event = new AaveDepositWithdrawEvent(id);
 
   event.cellar = cellarAddress;
   event.amount = amount;

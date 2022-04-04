@@ -22,8 +22,8 @@ dataSources:
         - CellarDayData
         - WalletDayData
         - TokenERC20
-        - AddRemoveEvent
         - DepositWithdrawEvent
+        - AaveDepositWithdrawEvent
       abis:
         - name: Cellar
           file: ../../node_modules/@sommelier/abis/src/AaveV2StablecoinCellar.json
@@ -58,8 +58,8 @@ dataSources:
         - CellarDayData
         - WalletDayData
         - TokenERC20
-        - AddRemoveEvent
         - DepositWithdrawEvent
+        - AaveDepositWithdrawEvent
       abis:
         - name: CellarStaking
           file: ../../node_modules/@sommelier/abis/src/CellarStaking.json
