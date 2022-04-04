@@ -1,5 +1,5 @@
 import { Withdraw } from "../generated/Cellar/Cellar";
-import { handleWithdraw } from "../src/cellar-mapping";
+import { handleDeposit, handleWithdraw } from "../src/cellar-mapping";
 import { Address, ethereum } from "@graphprotocol/graph-ts";
 import {
   assert,
@@ -10,14 +10,14 @@ import {
 } from "matchstick-as/assembly";
 
 const callerAddress = "0xc3761eb917cd790b30dad99f6cc5b4ff93c4f9ea";
-const ownerAddress = "0xc36442b4a4522e871399cd717abdd847ab11fe88";
-const anotherUser = "0xe73185a8afa703a034d5a5fe038bb763fcaeb5f3";
+const ownerX = "0xc36442b4a4522e871399cd717abdd847ab11fe88";
+const ownerY = "0xe73185a8afa703a034d5a5fe038bb763fcaeb5f3";
 const tokenAddress = "0x459ea910b4e637c925c68489bbaac9668357659b";
 const assetAmount = 1234;
 const shareAmount = 100;
 
 // -------------------------------------------------------------------------
-// Withdraw
+// Withdraw (mockWithdrawEvent)
 // -------------------------------------------------------------------------
 /**
  * @param  {string} receiver: Address of the wallet that's withdrawing funds
@@ -74,26 +74,66 @@ test("Withdraw without first depositing should result in negative TVL.", () => {
 
   const event = mockWithdrawEvent(
     callerAddress,
-    ownerAddress,
+    ownerX,
     tokenAddress,
     assetAmount,
     shareAmount
   );
 
   const cellarAddress = event.address.toHexString();
-  const anotherUser = "0xe73185a8afa703a034d5a5fe038bb763fcaeb5f3";
+  assert.assertTrue(cellarAddress != callerAddress);
+  assert.assertTrue(cellarAddress != ownerX);
+
+  // not sure where to use 'createMockedFunction'
   createMockedFunction(event.address, "asset", "asset():(address)").returns([
     ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
   ]);
 
   handleWithdraw(event);
 
-  assert.fieldEquals("Wallet", ownerAddress, "id", ownerAddress);
+  assert.fieldEquals("Wallet", ownerX, "id", ownerX);
   assert.fieldEquals("Cellar", cellarAddress, "id", cellarAddress);
   assert.fieldEquals("Cellar", cellarAddress, "numWalletsActive", "1");
   assert.fieldEquals("Cellar", cellarAddress, "numWalletsAllTime", "1");
   assert.fieldEquals("Cellar", cellarAddress, "asset", tokenAddress);
   assert.fieldEquals("Cellar", cellarAddress, "asset", tokenAddress);
   assert.fieldEquals("Cellar", cellarAddress, "tvlTotal", "-1234");
+  assert.fieldEquals("Cellar", cellarAddress, "sharesTotal", "0");
+}, shouldFail);
+
+shouldFail = false;
+test("2 wallets (owners) withdrawing should increment numWallets", () => {
+  clearStore();
+
+  const eventA = mockWithdrawEvent(
+    callerAddress,
+    ownerX,
+    tokenAddress,
+    assetAmount,
+    shareAmount
+  );
+  const eventB = mockWithdrawEvent(
+    callerAddress,
+    ownerY,
+    tokenAddress,
+    assetAmount,
+    shareAmount
+  );
+
+  const cellarAddress = eventA.address.toHexString();
+  assert.assertTrue(cellarAddress == eventB.address.toHexString());
+
+  handleWithdraw(eventA);
+  assert.fieldEquals("Wallet", ownerX, "id", ownerX);
+  assert.fieldEquals("Cellar", cellarAddress, "id", cellarAddress);
+  assert.fieldEquals("Cellar", cellarAddress, "numWalletsActive", "1");
+  assert.fieldEquals("Cellar", cellarAddress, "numWalletsAllTime", "1");
+  assert.fieldEquals("Cellar", cellarAddress, "asset", tokenAddress);
+
+  handleWithdraw(eventB);
+  assert.fieldEquals("Wallet", ownerY, "id", ownerY);
+  assert.fieldEquals("Cellar", cellarAddress, "numWalletsActive", "2");
+  assert.fieldEquals("Cellar", cellarAddress, "numWalletsAllTime", "2");
+  assert.fieldEquals("Cellar", cellarAddress, "tvlTotal", "-2468");
   assert.fieldEquals("Cellar", cellarAddress, "sharesTotal", "0");
 }, shouldFail);
