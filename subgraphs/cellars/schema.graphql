@@ -67,6 +67,26 @@ type TokenERC20 @entity {
   decimals: Int!
 }
 
+"""
+Rebalance (entity) is when the Cellar rebalances on Aave
+
+Fields:
+    id (ID): block timestamp of the rebalance transaction
+    inAsset (String): Address of the token used prior to rebalance
+    outAsset (String): Address of the token used following rebalance
+    outAmount (BigInt): Amount of 'outAsset' put into the new deposit to Aave
+"""
+type Rebalance @entity {
+    id: ID! # block timestamp
+    cellar: Cellar! 
+    outAsset: String!
+    outAmount: BigInt!
+}
+
+# ------------------------------------------------------------------------
+# Derived Event Entities - not explicitly defined by the cellar contract 
+# ------------------------------------------------------------------------
+
 type DepositWithdrawEvent @entity {
   id: ID! # timestamp + wallet address
   cellar: Cellar! # to/from depending on whether it's add or remove

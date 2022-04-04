@@ -15,13 +15,14 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - Wallet
         - Cellar
         - CellarShare
         - CellarShareTransfer
         - CellarDayData
+        - Wallet
         - WalletDayData
         - TokenERC20
+        - Rebalance
         - DepositWithdrawEvent
         - AaveDepositWithdrawEvent
       abis:
@@ -38,6 +39,8 @@ dataSources:
           handler: handleDeposit
         - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleWithdraw
+        - event: Rebalance(indexed address,indexed address,uint256)
+          handler: handleRebalance
       file: ./src/cellar-mapping.ts
   - kind: ethereum
     name: CellarStaking
