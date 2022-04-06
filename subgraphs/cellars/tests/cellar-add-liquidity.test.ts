@@ -2,7 +2,7 @@ import { Deposit } from "../generated/Cellar/Cellar";
 import { handleDeposit } from "../src/cellar-mapping";
 import { callerAddress, ownerAddress, tokenAddress } from "./fixtures";
 import {
-  mockCellarAsset,
+  mockCellar,
   mockTokenERC20Decimals,
   mockTokenERC20Symbol,
 } from "./helpers";
@@ -71,7 +71,7 @@ test("Wallet entity is created for new users", () => {
   );
 
   const cellarAddress = event.address.toHexString();
-  mockCellarAsset(event.address.toHexString(), tokenAddress);
+  mockCellar(event.address.toHexString(), tokenAddress);
 
   handleDeposit(event);
 

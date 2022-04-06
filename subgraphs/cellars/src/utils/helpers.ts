@@ -23,13 +23,10 @@ export function initCellar(contractAddress: Address): Cellar {
 
   cellar.name = "AaveStablecoinCellar";
 
-  // Fees, hardcoded for now
-  cellar.feeCommunity = BigDecimal.fromString("0.05");
-  cellar.feePlatform = BigDecimal.fromString("0.01");
-  cellar.feeStakers = BigDecimal.fromString("0.05");
-
   const contract = CellarContract.bind(contractAddress);
   cellar.asset = contract.asset().toHexString();
+  cellar.feePlatform = contract.PLATFORM_FEE();
+  cellar.feePerformance = contract.PERFORMANCE_FEE();
 
   const token = loadTokenERC20(cellar.asset);
   const decimals = TEN_BI.pow(token.decimals as u8); // USDC decimals = 6, assume asset starts as USDC

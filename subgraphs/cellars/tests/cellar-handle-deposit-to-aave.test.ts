@@ -7,7 +7,7 @@ import { TEN_BI } from "../src/utils/constants";
 import { mockEvent as mockLiquidityRestrictionRemoved } from "./cellar-handle-liquidity-restriction-removed.test";
 import { cellarAddress, tokenAddress } from "./fixtures";
 import {
-  mockCellarAsset,
+  mockCellar,
   mockTokenERC20Decimals,
   mockTokenERC20Symbol,
   revertTokenERC20Symbol,
@@ -43,7 +43,7 @@ function setup(): DepositToAave {
 
   mockTokenERC20Decimals(tokenAddress, decimals);
   mockTokenERC20Symbol(tokenAddress, sym);
-  mockCellarAsset(cellarAddress, tokenAddress);
+  mockCellar(cellarAddress, tokenAddress);
 
   return mockEvent(tokenAddress, amount);
 }
@@ -74,7 +74,7 @@ test("it gracefully handles token.symbol revert", () => {
 
   mockTokenERC20Decimals(tokenAddress, decimals);
   revertTokenERC20Symbol(tokenAddress);
-  mockCellarAsset(cellarAddress, tokenAddress);
+  mockCellar(cellarAddress, tokenAddress);
 
   const event = mockEvent(tokenAddress, amount);
 
@@ -94,7 +94,7 @@ test("it gracefully handles token.decimals revert", () => {
 
   revertTokenERC20Decimals(tokenAddress);
   mockTokenERC20Symbol(tokenAddress, sym);
-  mockCellarAsset(cellarAddress, tokenAddress);
+  mockCellar(cellarAddress, tokenAddress);
 
   const event = mockEvent(tokenAddress, amount);
 

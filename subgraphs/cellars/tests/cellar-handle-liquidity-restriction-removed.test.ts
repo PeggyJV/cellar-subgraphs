@@ -1,7 +1,7 @@
 import { LiquidityRestrictionRemoved } from "../generated/Cellar/Cellar";
 import { handleLiquidityRestrictionRemoved } from "../src/cellar-mapping";
 import {
-  mockCellarAsset,
+  mockCellar,
   mockTokenERC20Decimals,
   mockTokenERC20Symbol,
 } from "./helpers";
@@ -17,7 +17,7 @@ test("it sets maxLiquidity to 0", () => {
 
   const event = mockEvent();
   const cellar = event.address.toHexString();
-  mockCellarAsset(cellar);
+  mockCellar(cellar);
   mockTokenERC20Symbol();
   mockTokenERC20Decimals();
 
