@@ -6,7 +6,6 @@ import {
   clearStore,
   test,
   newMockEvent,
-  createMockedFunction,
 } from "matchstick-as/assembly";
 
 const callerAddress = "0xc3761eb917cd790b30dad99f6cc5b4ff93c4f9ea";
@@ -85,11 +84,6 @@ test("Withdraw without first depositing should result in negative TVL.", () => {
   assert.assertTrue(cellarAddress != callerAddress);
   assert.assertTrue(cellarAddress != ownerX);
   assert.assertTrue(event.params.receiver.toHexString() == callerAddress);
-
-  // Q: I'm not sure where to use 'createMockedFunction'
-  createMockedFunction(event.address, "asset", "asset():(address)").returns([
-    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
-  ]);
 
   handleWithdraw(event);
 

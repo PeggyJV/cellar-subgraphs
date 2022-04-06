@@ -196,7 +196,7 @@ export function createDepositWithdrawEvent(
   return event;
 }
 
-export function createDepositToWithdrawFromAaveEvent(
+export function createAaveDepositWithdrawEvent(
   blockTimestamp: BigInt,
   cellarAddress: string,
   amount: BigInt,
