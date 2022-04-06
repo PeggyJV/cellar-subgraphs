@@ -20,10 +20,14 @@ type Cellar @entity {
   numWalletsActive: Int!
   sharesTotal: BigInt!
 
+  feePerformance: BigInt!
+  feePlatform: BigInt!
+
+  maxLiquidity: BigInt! # Max Deposits
+
   dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
   aaveDepositWithdraws: [AaveDepositWithdrawEvent!]! @derivedFrom(field: "cellar")
 }
-
 
 type CellarShare @entity {
   id: ID! # <cellar address>-<user wallet>

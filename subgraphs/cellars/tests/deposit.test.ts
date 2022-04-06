@@ -1,20 +1,17 @@
 import { Deposit } from "../generated/Cellar/Cellar";
 import { handleDeposit } from "../src/cellar-mapping";
-import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { callerAddress, ownerAddress, tokenAddress, ownerY } from "./fixtures";
 import {
-  assert,
-  clearStore,
-  test,
-  newMockEvent,
-  createMockedFunction,
-} from "matchstick-as/assembly";
+  mockCellar,
+  mockTokenERC20Decimals,
+  mockTokenERC20Symbol,
+} from "./helpers";
+import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { assert, clearStore, test, newMockEvent } from "matchstick-as/assembly";
 
-const callerAddress = "0xc3761eb917cd790b30dad99f6cc5b4ff93c4f9ea";
-const ownerAddress = "0xc36442b4a4522e871399cd717abdd847ab11fe88";
-const anotherUser = "0xe73185a8afa703a034d5a5fe038bb763fcaeb5f3";
-const tokenAddress = "0x459ea910b4e637c925c68489bbaac9668357659b";
+// Fixtures
 const assetAmount = 1234;
-const shareAmount = 100;
+const shareAmount = assetAmount;
 
 // -------------------------------------------------------------------------
 // Deposit
@@ -60,10 +57,15 @@ function mockDepositEvent(
   return event;
 }
 
+function setup(): void {
+  mockTokenERC20Symbol(tokenAddress);
+  mockTokenERC20Decimals(tokenAddress);
+}
+
 test("Wallet entity is created for new users", () => {
   clearStore();
+  setup();
 
-  const address = "0xe73185a8afa703a034d5a5fe038bb763fcaeb5f3";
   const event = mockDepositEvent(
     callerAddress,
     ownerAddress,
@@ -73,10 +75,7 @@ test("Wallet entity is created for new users", () => {
   );
 
   const cellarAddress = event.address.toHexString();
-  // createMockedFunction seems to be unused. What is this for?
-  createMockedFunction(event.address, "asset", "asset():(address)").returns([
-    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
-  ]);
+  mockCellar(event.address.toHexString(), tokenAddress);
 
   handleDeposit(event);
 
@@ -89,6 +88,7 @@ test("Wallet entity is created for new users", () => {
 
 test("Cellar numWalletsAllTime is not incremented for existing users", () => {
   clearStore();
+  setup();
 
   const event = mockDepositEvent(
     callerAddress,
@@ -135,14 +135,14 @@ test("Cellar numWalletsActive and numWalletsAllTime increment for different user
 
   event = mockDepositEvent(
     callerAddress,
-    anotherUser,
+    ownerY,
     tokenAddress,
     assetAmount,
     shareAmount
   );
   handleDeposit(event);
 
-  assert.fieldEquals("Wallet", anotherUser, "id", anotherUser);
+  assert.fieldEquals("Wallet", ownerY, "id", ownerY);
   assert.fieldEquals("Cellar", cellarAddress, "numWalletsActive", "2");
   assert.fieldEquals("Cellar", cellarAddress, "numWalletsAllTime", "2");
 });
