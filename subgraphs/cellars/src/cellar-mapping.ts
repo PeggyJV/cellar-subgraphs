@@ -1,22 +1,24 @@
 import {
   Deposit,
   DepositToAave,
+  LiquidityRestrictionRemoved,
   Withdraw,
   WithdrawFromAave,
   Transfer as CellarShareTransferEvent,
 } from "../generated/Cellar/Cellar";
 import { Wallet } from "../generated/schema";
+import { ZERO_BI, TEN_BI } from "./utils/constants";
 import {
-  createAddRemoveEvent,
   createDepositWithdrawEvent,
+  createDepositWithdrawAaveEvent,
   loadCellar,
   loadCellarDayData,
   loadCellarShare,
+  loadTokenERC20,
   loadWalletDayData,
   initCellarShareTransfer,
-  ZERO_BI,
 } from "./utils/helpers";
-import { Address } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 
 export function handleDeposit(event: Deposit): void {
   // Cellar
@@ -50,7 +52,7 @@ export function handleDeposit(event: Deposit): void {
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(liqAmount);
 
   // Log the actual Deposit event
-  createAddRemoveEvent(
+  createDepositWithdrawEvent(
     timestamp,
     cellar.id,
     wallet.id,
@@ -99,8 +101,8 @@ export function handleWithdraw(event: Withdraw): void {
   walletDayData.removedLiquidity =
     walletDayData.removedLiquidity.plus(liqAmount);
 
-  // Log the event, cellarRemoveLiquidity, as `AddRemoveEvent`
-  createAddRemoveEvent(
+  // Log the event, cellarRemoveLiquidity, as `DepositWithdrawEvent`
+  createDepositWithdrawEvent(
     timestamp,
     cellar.id,
     wallet.id,
@@ -117,17 +119,29 @@ export function handleWithdraw(event: Withdraw): void {
 
 export function handleDepositToAave(event: DepositToAave): void {
   const depositAmount = event.params.amount;
+  const tokenAddress = event.params.token.toHexString();
+  const token = loadTokenERC20(tokenAddress);
 
   // cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
   cellar.tvlActive = cellar.tvlActive.plus(depositAmount);
   cellar.tvlInactive = cellar.tvlInactive.minus(depositAmount);
+
+  // input asset = new aave lending token
+  cellar.asset = token.id;
+
+  // update maxLiquidity, see maxDeposit impl in contract
+  if (cellar.maxLiquidity.notEqual(ZERO_BI)) {
+    const decimals = TEN_BI.pow(token.decimals as u8);
+    cellar.maxLiquidity = BigInt.fromI32(50000).times(decimals);
+  }
+
   cellar.save();
 
-  // createDepositWithdrawEvent
+  // createDepositWithdrawAaveEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawEvent(
+  createDepositWithdrawAaveEvent(
     timestamp,
     cellar.id,
     depositAmount,
@@ -146,9 +160,9 @@ export function handleWithdrawFromAave(event: WithdrawFromAave): void {
   cellar.tvlInactive = cellar.tvlInactive.plus(withdrawAmount);
   cellar.save();
 
-  // createDepositWithdrawEvent
+  // createDepositWithdrawAaveEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawEvent(
+  createDepositWithdrawAaveEvent(
     timestamp,
     cellar.id,
     withdrawAmount.neg(),
@@ -263,4 +277,13 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
   } else {
     // TransferEvent is neither a mint nor a burn.
   }
+}
+
+export function handleLiquidityRestrictionRemoved(
+  event: LiquidityRestrictionRemoved
+): void {
+  const cellar = loadCellar(event.address);
+  cellar.maxLiquidity = ZERO_BI;
+
+  cellar.save();
 }

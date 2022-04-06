@@ -4,7 +4,7 @@ type Wallet @entity {
   cellarShareTransferEvents: [CellarShareTransfer!]!
     @derivedFrom(field: "wallet")
   dayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
-  addRemoveEvents: [AddRemoveEvent!]! @derivedFrom(field: "wallet")
+  depositWithdrawEvents: [DepositWithdrawEvent!]! @derivedFrom(field: "wallet")
 }
 
 type Cellar @entity {
@@ -20,10 +20,14 @@ type Cellar @entity {
   numWalletsActive: Int!
   sharesTotal: BigInt!
 
-  dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
-  depositWithdraws: [DepositWithdrawEvent!]! @derivedFrom(field: "cellar")
-}
+  feePerformance: BigInt!
+  feePlatform: BigInt!
 
+  maxLiquidity: BigInt! # Max Deposits
+
+  dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
+  depositWithdrawEvents: [DepositWithdrawAaveEvent!]! @derivedFrom(field: "cellar")
+}
 
 type CellarShare @entity {
   id: ID! # <cellar address>-<user wallet>
@@ -67,7 +71,7 @@ type TokenERC20 @entity {
   decimals: Int!
 }
 
-type AddRemoveEvent @entity {
+type DepositWithdrawEvent @entity {
   id: ID! # timestamp + wallet address
   cellar: Cellar! # to/from depending on whether it's add or remove
   wallet: Wallet! # from/to
@@ -77,7 +81,7 @@ type AddRemoveEvent @entity {
   timestamp: Int! # block.timestamp.toI32()
 }
 
-type DepositWithdrawEvent @entity {
+type DepositWithdrawAaveEvent @entity {
   id: ID! # transaction hash
   cellar: Cellar! # to/from depending on whether it's add or remove
   amount: BigInt! # signed

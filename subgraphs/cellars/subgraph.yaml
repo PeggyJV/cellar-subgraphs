@@ -22,11 +22,13 @@ dataSources:
         - CellarDayData
         - WalletDayData
         - TokenERC20
-        - AddRemoveEvent
         - DepositWithdrawEvent
+        - DepositWithdrawAaveEvent
       abis:
         - name: Cellar
           file: ../../node_modules/@sommelier/abis/src/AaveV2StablecoinCellar.json
+        - name: ERC20
+          file: ../../node_modules/@sommelier/abis/src/ERC20.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
@@ -38,6 +40,8 @@ dataSources:
           handler: handleDeposit
         - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleWithdraw
+        - event: LiquidityRestrictionRemoved()
+          handler: handleLiquidityRestrictionRemoved
       file: ./src/cellar-mapping.ts
   - kind: ethereum
     name: CellarStaking
@@ -58,8 +62,8 @@ dataSources:
         - CellarDayData
         - WalletDayData
         - TokenERC20
-        - AddRemoveEvent
         - DepositWithdrawEvent
+        - DepositWithdrawAaveEvent
       abis:
         - name: CellarStaking
           file: ../../node_modules/@sommelier/abis/src/CellarStaking.json
