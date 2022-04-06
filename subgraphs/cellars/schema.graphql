@@ -20,6 +20,13 @@ type Cellar @entity {
   numWalletsActive: Int!
   sharesTotal: BigInt!
 
+  # Fees, hardcoded as percentages for now
+  feeCommunity: BigDecimal!
+  feePlatform: BigDecimal!
+  feeStakers: BigDecimal!
+
+  maxLiquidity: BigInt! # Max Deposits
+
   dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
   depositWithdrawEventss: [DepositWithdrawAaveEvent!]! @derivedFrom(field: "cellar")
 }

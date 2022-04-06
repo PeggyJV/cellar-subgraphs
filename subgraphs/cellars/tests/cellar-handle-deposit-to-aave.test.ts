@@ -1,5 +1,10 @@
 import { DepositToAave } from "../generated/Cellar/Cellar";
-import { handleDepositToAave } from "../src/cellar-mapping";
+import {
+  handleDepositToAave,
+  handleLiquidityRestrictionRemoved,
+} from "../src/cellar-mapping";
+import { TEN_BI } from "../src/utils/constants";
+import { mockEvent as mockLiquidityRestrictionRemoved } from "./cellar-handle-liquidity-restriction-removed.test";
 import { cellarAddress, tokenAddress } from "./fixtures";
 import {
   mockCellarAsset,
@@ -8,7 +13,7 @@ import {
   revertTokenERC20Symbol,
   revertTokenERC20Decimals,
 } from "./helpers";
-import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, clearStore, test, newMockEvent } from "matchstick-as/assembly";
 
 // Fixtures
@@ -97,4 +102,37 @@ test("it gracefully handles token.decimals revert", () => {
 
   assert.fieldEquals("TokenERC20", tokenAddress, "symbol", sym);
   assert.fieldEquals("TokenERC20", tokenAddress, "decimals", "0");
+});
+
+test("it sets cellar.asset", () => {
+  const event = setup();
+  handleDepositToAave(event);
+
+  assert.fieldEquals("Cellar", cellarAddress, "asset", tokenAddress);
+});
+
+test("it updates maxLiquidity if restrictions have not been removed", () => {
+  const event = setup();
+  handleDepositToAave(event);
+
+  const dec = decimals as u8;
+
+  assert.fieldEquals(
+    "Cellar",
+    cellarAddress,
+    "maxLiquidity",
+    BigInt.fromI32(50000).times(TEN_BI.pow(dec)).toString()
+  );
+});
+
+test("it does not update maxLiquidity if restrictions have been removed", () => {
+  const event = setup();
+  const liquidityRestrictionRemovedEvent = mockLiquidityRestrictionRemoved();
+  liquidityRestrictionRemovedEvent.address = Address.fromString(cellarAddress);
+
+  handleLiquidityRestrictionRemoved(liquidityRestrictionRemovedEvent);
+  assert.fieldEquals("Cellar", cellarAddress, "maxLiquidity", "0");
+
+  handleDepositToAave(event);
+  assert.fieldEquals("Cellar", cellarAddress, "maxLiquidity", "0");
 });

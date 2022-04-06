@@ -1,11 +1,13 @@
 import {
   Deposit,
   DepositToAave,
+  LiquidityRestrictionRemoved,
   Withdraw,
   WithdrawFromAave,
   Transfer as CellarShareTransferEvent,
 } from "../generated/Cellar/Cellar";
 import { Wallet } from "../generated/schema";
+import { ZERO_BI, TEN_BI } from "./utils/constants";
 import {
   createDepositWithdrawEvent,
   createDepositWithdrawAaveEvent,
@@ -15,9 +17,8 @@ import {
   loadTokenERC20,
   loadWalletDayData,
   initCellarShareTransfer,
-  ZERO_BI,
 } from "./utils/helpers";
-import { Address } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 
 export function handleDeposit(event: Deposit): void {
   // Cellar
@@ -126,7 +127,16 @@ export function handleDepositToAave(event: DepositToAave): void {
   const cellar = loadCellar(cellarAddress);
   cellar.tvlActive = cellar.tvlActive.plus(depositAmount);
   cellar.tvlInactive = cellar.tvlInactive.minus(depositAmount);
+
+  // input asset = new aave lending token
   cellar.asset = token.id;
+
+  // update maxLiquidity, see maxDeposit impl in contract
+  if (cellar.maxLiquidity.notEqual(ZERO_BI)) {
+    const decimals = TEN_BI.pow(token.decimals as u8);
+    cellar.maxLiquidity = BigInt.fromI32(50000).times(decimals);
+  }
+
   cellar.save();
 
   // createDepositWithdrawAaveEvent
@@ -267,4 +277,13 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
   } else {
     // TransferEvent is neither a mint nor a burn.
   }
+}
+
+export function handleLiquidityRestrictionRemoved(
+  event: LiquidityRestrictionRemoved
+): void {
+  const cellar = loadCellar(event.address);
+  cellar.maxLiquidity = ZERO_BI;
+
+  cellar.save();
 }

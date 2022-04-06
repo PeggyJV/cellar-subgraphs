@@ -1,7 +1,11 @@
+import { tokenAddress } from "./fixtures";
 import { Address, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as/assembly";
 
-export function mockCellarAsset(cellar: string, asset: string): void {
+export function mockCellarAsset(
+  cellar: string,
+  asset: string = tokenAddress
+): void {
   createMockedFunction(
     Address.fromString(cellar),
     "asset",
@@ -9,7 +13,10 @@ export function mockCellarAsset(cellar: string, asset: string): void {
   ).returns([ethereum.Value.fromAddress(Address.fromString(asset))]);
 }
 
-export function mockTokenERC20Symbol(token: string, sym: string): void {
+export function mockTokenERC20Symbol(
+  token: string = tokenAddress,
+  sym: string = "USDC"
+): void {
   createMockedFunction(
     Address.fromString(token),
     "symbol",
@@ -25,7 +32,10 @@ export function revertTokenERC20Symbol(token: string): void {
   ).reverts();
 }
 
-export function mockTokenERC20Decimals(token: string, decimals: u32): void {
+export function mockTokenERC20Decimals(
+  token: string = tokenAddress,
+  decimals: u32 = 6
+): void {
   createMockedFunction(
     Address.fromString(token),
     "decimals",
