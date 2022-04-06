@@ -1,11 +1,13 @@
 import { Cellar as CellarContract } from "../../generated/Cellar/Cellar";
+import { ERC20 } from "../../generated/Cellar/ERC20";
 import {
-  AddRemoveEvent,
+  DepositWithdrawEvent,
   Cellar,
   CellarDayData,
   CellarShare,
   CellarShareTransfer,
-  DepositWithdrawEvent,
+  DepositWithdrawAaveEvent,
+  TokenERC20,
   Wallet,
   WalletDayData,
 } from "../../generated/schema";
@@ -30,7 +32,6 @@ export function initCellar(contractAddress: Address): Cellar {
 
   const contract = CellarContract.bind(contractAddress);
   cellar.asset = contract.asset().toHexString();
-  contract.asset;
 
   return cellar;
 }
@@ -171,19 +172,19 @@ export function initCellarShareTransfer(
   return cellarShareTransfer;
 }
 
-export function createAddRemoveEvent(
+export function createDepositWithdrawEvent(
   blockTimestamp: BigInt,
   cellarAddress: string,
   walletAddress: string,
   amount: BigInt,
   txId: string,
   blockNumber: BigInt
-): AddRemoveEvent {
+): DepositWithdrawEvent {
   const id = blockTimestamp
     .toString()
     .concat(ID_DELIMITER)
     .concat(walletAddress);
-  const event = new AddRemoveEvent(id);
+  const event = new DepositWithdrawEvent(id);
 
   event.cellar = cellarAddress;
   event.wallet = walletAddress;
@@ -196,16 +197,16 @@ export function createAddRemoveEvent(
   return event;
 }
 
-export function createDepositWithdrawEvent(
+export function createDepositWithdrawAaveEvent(
   blockTimestamp: BigInt,
   cellarAddress: string,
   amount: BigInt,
   txId: string,
   blockNumber: BigInt
-): DepositWithdrawEvent {
+): DepositWithdrawAaveEvent {
   // id: txId
   const id = txId;
-  const event = new DepositWithdrawEvent(id);
+  const event = new DepositWithdrawAaveEvent(id);
 
   event.cellar = cellarAddress;
   event.amount = amount;
@@ -215,4 +216,31 @@ export function createDepositWithdrawEvent(
   event.save();
 
   return event;
+}
+
+export function initToken(address: string): TokenERC20 {
+  const token = new TokenERC20(address);
+
+  const contract = ERC20.bind(Address.fromString(address));
+  const sym = contract.try_symbol();
+  if (!sym.reverted) {
+    token.symbol = sym.value;
+  }
+
+  const decimals = contract.try_decimals();
+  if (!decimals.reverted) {
+    token.decimals = decimals.value;
+  }
+
+  token.save();
+  return token;
+}
+
+export function loadTokenERC20(address: string): TokenERC20 {
+  let token = TokenERC20.load(address);
+  if (token == null) {
+    token = initToken(address);
+  }
+
+  return token;
 }

@@ -7,11 +7,12 @@ import {
 } from "../generated/Cellar/Cellar";
 import { Wallet } from "../generated/schema";
 import {
-  createAddRemoveEvent,
   createDepositWithdrawEvent,
+  createDepositWithdrawAaveEvent,
   loadCellar,
   loadCellarDayData,
   loadCellarShare,
+  loadTokenERC20,
   loadWalletDayData,
   initCellarShareTransfer,
   ZERO_BI,
@@ -50,7 +51,7 @@ export function handleDeposit(event: Deposit): void {
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(liqAmount);
 
   // Log the actual Deposit event
-  createAddRemoveEvent(
+  createDepositWithdrawEvent(
     timestamp,
     cellar.id,
     wallet.id,
@@ -99,8 +100,8 @@ export function handleWithdraw(event: Withdraw): void {
   walletDayData.removedLiquidity =
     walletDayData.removedLiquidity.plus(liqAmount);
 
-  // Log the event, cellarRemoveLiquidity, as `AddRemoveEvent`
-  createAddRemoveEvent(
+  // Log the event, cellarRemoveLiquidity, as `DepositWithdrawEvent`
+  createDepositWithdrawEvent(
     timestamp,
     cellar.id,
     wallet.id,
@@ -117,17 +118,20 @@ export function handleWithdraw(event: Withdraw): void {
 
 export function handleDepositToAave(event: DepositToAave): void {
   const depositAmount = event.params.amount;
+  const tokenAddress = event.params.token.toHexString();
+  const token = loadTokenERC20(tokenAddress);
 
   // cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
   cellar.tvlActive = cellar.tvlActive.plus(depositAmount);
   cellar.tvlInactive = cellar.tvlInactive.minus(depositAmount);
+  cellar.asset = token.id;
   cellar.save();
 
-  // createDepositWithdrawEvent
+  // createDepositWithdrawAaveEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawEvent(
+  createDepositWithdrawAaveEvent(
     timestamp,
     cellar.id,
     depositAmount,
@@ -146,9 +150,9 @@ export function handleWithdrawFromAave(event: WithdrawFromAave): void {
   cellar.tvlInactive = cellar.tvlInactive.plus(withdrawAmount);
   cellar.save();
 
-  // createDepositWithdrawEvent
+  // createDepositWithdrawAaveEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawEvent(
+  createDepositWithdrawAaveEvent(
     timestamp,
     cellar.id,
     withdrawAmount.neg(),
