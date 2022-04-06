@@ -26,7 +26,7 @@ type Cellar @entity {
   maxLiquidity: BigInt! # Max Deposits
 
   dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
-  depositWithdrawEvents: [DepositWithdrawAaveEvent!]! @derivedFrom(field: "cellar")
+  aaveDepositWithdraws: [AaveDepositWithdrawEvent!]! @derivedFrom(field: "cellar")
 }
 
 type CellarShare @entity {
@@ -81,7 +81,7 @@ type DepositWithdrawEvent @entity {
   timestamp: Int! # block.timestamp.toI32()
 }
 
-type DepositWithdrawAaveEvent @entity {
+type AaveDepositWithdrawEvent @entity {
   id: ID! # transaction hash
   cellar: Cellar! # to/from depending on whether it's add or remove
   amount: BigInt! # signed

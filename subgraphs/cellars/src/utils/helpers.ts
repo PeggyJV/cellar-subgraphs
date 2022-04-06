@@ -6,7 +6,7 @@ import {
   CellarDayData,
   CellarShare,
   CellarShareTransfer,
-  DepositWithdrawAaveEvent,
+  AaveDepositWithdrawEvent,
   TokenERC20,
   Wallet,
   WalletDayData,
@@ -196,16 +196,16 @@ export function createDepositWithdrawEvent(
   return event;
 }
 
-export function createDepositWithdrawAaveEvent(
+export function createAaveDepositWithdrawEvent(
   blockTimestamp: BigInt,
   cellarAddress: string,
   amount: BigInt,
   txId: string,
   blockNumber: BigInt
-): DepositWithdrawAaveEvent {
+): AaveDepositWithdrawEvent {
   // id: txId
   const id = txId;
-  const event = new DepositWithdrawAaveEvent(id);
+  const event = new AaveDepositWithdrawEvent(id);
 
   event.cellar = cellarAddress;
   event.amount = amount;

@@ -10,7 +10,7 @@ import { Wallet } from "../generated/schema";
 import { ZERO_BI, TEN_BI } from "./utils/constants";
 import {
   createDepositWithdrawEvent,
-  createDepositWithdrawAaveEvent,
+  createAaveDepositWithdrawEvent,
   loadCellar,
   loadCellarDayData,
   loadCellarShare,
@@ -139,9 +139,9 @@ export function handleDepositToAave(event: DepositToAave): void {
 
   cellar.save();
 
-  // createDepositWithdrawAaveEvent
+  // createAaveDepositWithdrawEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawAaveEvent(
+  createAaveDepositWithdrawEvent(
     timestamp,
     cellar.id,
     depositAmount,
@@ -160,9 +160,9 @@ export function handleWithdrawFromAave(event: WithdrawFromAave): void {
   cellar.tvlInactive = cellar.tvlInactive.plus(withdrawAmount);
   cellar.save();
 
-  // createDepositWithdrawAaveEvent
+  // createEvent
   const timestamp = event.block.timestamp;
-  createDepositWithdrawAaveEvent(
+  createAaveDepositWithdrawEvent(
     timestamp,
     cellar.id,
     withdrawAmount.neg(),
