@@ -1,6 +1,6 @@
 import { Withdraw } from "../generated/Cellar/Cellar";
 import { handleDeposit, handleWithdraw } from "../src/cellar-mapping";
-import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import {
   assert,
   clearStore,
@@ -81,17 +81,22 @@ test("Withdraw without first depositing should result in negative TVL.", () => {
   );
 
   const cellarAddress = event.address.toHexString();
+  assert.assertTrue(event.params.owner.toHexString() == ownerX);
   assert.assertTrue(cellarAddress != callerAddress);
   assert.assertTrue(cellarAddress != ownerX);
+  assert.assertTrue(event.params.receiver.toHexString() == callerAddress);
 
-  // not sure where to use 'createMockedFunction'
+  // Q: I'm not sure where to use 'createMockedFunction'
   createMockedFunction(event.address, "asset", "asset():(address)").returns([
     ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
   ]);
 
   handleWithdraw(event);
 
+  // Verify Wallet fields
   assert.fieldEquals("Wallet", ownerX, "id", ownerX);
+  
+  // Verify Cellar fields
   assert.fieldEquals("Cellar", cellarAddress, "id", cellarAddress);
   assert.fieldEquals("Cellar", cellarAddress, "numWalletsActive", "1");
   assert.fieldEquals("Cellar", cellarAddress, "numWalletsAllTime", "1");
@@ -99,6 +104,33 @@ test("Withdraw without first depositing should result in negative TVL.", () => {
   assert.fieldEquals("Cellar", cellarAddress, "asset", tokenAddress);
   assert.fieldEquals("Cellar", cellarAddress, "tvlTotal", "-1234");
   assert.fieldEquals("Cellar", cellarAddress, "sharesTotal", "0");
+
+  // Verify CellarDayData fields
+  const secondsPerDay = 3600 * 24;
+  const date = (event.block.timestamp.toI32() / secondsPerDay) * secondsPerDay;
+  const cellarDayDataID = date.toString().concat("-").concat(cellarAddress);
+  assert.fieldEquals("CellarDayData", cellarDayDataID, "id", cellarDayDataID);
+  assert.fieldEquals("CellarDayData", cellarDayDataID, "removedLiquidity", "1234");
+
+  // Verify WalletDayData fields
+  const walletDayDataID = date.toString().concat("-").concat(ownerX);
+  assert.fieldEquals("WalletDayData", walletDayDataID, "id", walletDayDataID);
+  assert.fieldEquals("WalletDayData", walletDayDataID, "addedLiquidity", "0");
+  assert.fieldEquals("WalletDayData", walletDayDataID, "removedLiquidity", "1234");
+
+  const depositWithdrawID = event.block.timestamp.toI32().toString()
+    .concat("-").concat(ownerX);
+  assert.fieldEquals("DepositWithdrawEvent", depositWithdrawID, "id", depositWithdrawID);
+  assert.fieldEquals("DepositWithdrawEvent", depositWithdrawID, "cellar", cellarAddress);
+  assert.fieldEquals("DepositWithdrawEvent", depositWithdrawID, "wallet", ownerX);
+  assert.fieldEquals("DepositWithdrawEvent", depositWithdrawID, "amount", "-1234");
+  assert.fieldEquals(
+    "DepositWithdrawEvent", depositWithdrawID, 
+    "txId", event.transaction.hash.toHexString());
+  assert.fieldEquals(
+    "DepositWithdrawEvent", depositWithdrawID, 
+    "block", event.block.number.toI32().toString(),
+    );
 }, shouldFail);
 
 shouldFail = false;
