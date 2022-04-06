@@ -1,19 +1,22 @@
 import { Withdraw } from "../generated/Cellar/Cellar";
-import { handleDeposit, handleWithdraw } from "../src/cellar-mapping";
+import { handleWithdraw } from "../src/cellar-mapping";
 import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { callerAddress, tokenAddress, ownerX, ownerY} from "./fixtures";
 import {
   assert,
   clearStore,
   test,
   newMockEvent,
 } from "matchstick-as/assembly";
+import { mockCellar, mockTokenERC20Symbol, mockTokenERC20Decimals } from "./helpers";
 
-const callerAddress = "0xc3761eb917cd790b30dad99f6cc5b4ff93c4f9ea";
-const ownerX = "0xc36442b4a4522e871399cd717abdd847ab11fe88";
-const ownerY = "0xe73185a8afa703a034d5a5fe038bb763fcaeb5f3";
-const tokenAddress = "0x459ea910b4e637c925c68489bbaac9668357659b";
 const assetAmount = 1234;
 const shareAmount = 100;
+
+function setup(): void {
+  mockTokenERC20Symbol(tokenAddress);
+  mockTokenERC20Decimals(tokenAddress);
+}
 
 // -------------------------------------------------------------------------
 // Withdraw (mockWithdrawEvent)
@@ -66,10 +69,10 @@ function mockWithdrawEvent(
   return event;
 }
 
-
 let shouldFail = false;
 test("Withdraw without first depositing should result in negative TVL.", () => {
   clearStore();
+  setup();
 
   const event = mockWithdrawEvent(
     callerAddress,
@@ -80,6 +83,7 @@ test("Withdraw without first depositing should result in negative TVL.", () => {
   );
 
   const cellarAddress = event.address.toHexString();
+  mockCellar(cellarAddress, tokenAddress)
   assert.assertTrue(event.params.owner.toHexString() == ownerX);
   assert.assertTrue(cellarAddress != callerAddress);
   assert.assertTrue(cellarAddress != ownerX);
@@ -130,6 +134,7 @@ test("Withdraw without first depositing should result in negative TVL.", () => {
 shouldFail = false;
 test("2 wallets (owners) withdrawing should increment numWallets", () => {
   clearStore();
+  setup();
 
   const eventA = mockWithdrawEvent(
     callerAddress,
@@ -147,6 +152,7 @@ test("2 wallets (owners) withdrawing should increment numWallets", () => {
   );
 
   const cellarAddress = eventA.address.toHexString();
+  mockCellar(eventA.address.toHexString(), tokenAddress);
   assert.assertTrue(cellarAddress == eventB.address.toHexString());
 
   handleWithdraw(eventA);
