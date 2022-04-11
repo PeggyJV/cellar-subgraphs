@@ -17,7 +17,7 @@ const cellar = cellarAddress;
 
 function mockTransferEvent(from: string, to: string, amount: u32): Transfer {
   const event = changetype<Transfer>(newMockEvent());
-  event.address = Address.fromString(cellarAddress);
+  event.address = Address.fromString(cellar);
 
   event.parameters = [
     new ethereum.EventParam(
@@ -76,6 +76,47 @@ test("mint transfer, happy path", () => {
   assert.fieldEquals("CellarShare", cellarShareID, "id", cellarShareID);
   assert.fieldEquals("CellarShare", cellarShareID, "wallet", ownerX);
   assert.fieldEquals("CellarShare", cellarShareID, "balance", "10");
+
+  // Validate CellarShareTransfer
+  const cellarShareTransferID = event
+    .block.timestamp.toString()
+    .concat("-").concat(cellar)
+    .concat("-").concat(ownerX);
+  assert.fieldEquals(
+    "CellarShareTransfer", cellarShareTransferID,
+    "id", cellarShareTransferID);
+  assert.fieldEquals("CellarShareTransfer", cellarShareTransferID,
+    "from", event.params.from.toHexString());
+  assert.fieldEquals("CellarShareTransfer", cellarShareTransferID,
+    "to", event.params.to.toHexString());
+  assert.fieldEquals("CellarShareTransfer", cellarShareTransferID,
+    "amount", event.params.amount.toString());
+  assert.fieldEquals("CellarShareTransfer", cellarShareTransferID,
+    "txId", event.transaction.hash.toHexString());
+});
+
+test("burn transfer, happy path", () => {
+  setup();
+
+  const mintEvent = mockMintTransferEvent(ownerX, 10);
+  handleTransfer(mintEvent);
+
+  const event = mockBurnTransferEvent(ownerX, 5);
+  assert.assertTrue(cellar == event.address.toHexString());
+
+  handleTransfer(event);
+
+  assert.fieldEquals("Wallet", ownerX, "id", ownerX);
+  assert.fieldEquals("Cellar", cellar, "id", cellar);
+  assert.fieldEquals("Cellar", cellar, "numWalletsActive", "1");
+  assert.fieldEquals("Cellar", cellar, "numWalletsAllTime", "1");
+  assert.fieldEquals("Cellar", cellar, "asset", tokenAddress);
+
+  // Validate CellarShare
+  const cellarShareID = ownerX + "-" + cellar;
+  assert.fieldEquals("CellarShare", cellarShareID, "id", cellarShareID);
+  assert.fieldEquals("CellarShare", cellarShareID, "wallet", ownerX);
+  assert.fieldEquals("CellarShare", cellarShareID, "balance", "5");
 
   // Validate CellarShareTransfer
   const cellarShareTransferID = event
