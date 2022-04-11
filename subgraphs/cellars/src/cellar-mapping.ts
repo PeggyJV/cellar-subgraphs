@@ -4,7 +4,7 @@ import {
   LiquidityRestrictionRemoved,
   Withdraw,
   WithdrawFromAave,
-  Transfer as CellarShareTransferEvent,
+  Transfer,
 } from "../generated/Cellar/Cellar";
 import { Wallet } from "../generated/schema";
 import { ZERO_BI, TEN_BI } from "./utils/constants";
@@ -171,7 +171,7 @@ export function handleWithdrawFromAave(event: WithdrawFromAave): void {
   );
 }
 
-export function handleTransfer(event: CellarShareTransferEvent): void {
+export function handleTransfer(event: Transfer): void {
   const transferAmount = event.params.amount;
   const from = event.params.from;
   const to = event.params.to;
