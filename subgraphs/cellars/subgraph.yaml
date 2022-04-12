@@ -71,3 +71,23 @@ dataSources:
         - event: Claim(indexed address,uint256,uint256)
           handler: handleClaim
       file: ./src/cellar-staking-mapping.ts
+  - kind: ethereum
+    name: USDC
+    network: mainnet
+    source:
+      address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" # USDC Token address
+      abi: ERC20
+      startBlock: 14332315 # placeholder, should be the same start block as the cellar contract
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - CellarDayData
+      abis:
+        - name: ERC20
+          file: ../../node_modules/@sommelier/abis/src/ERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/usdc-mapping.ts

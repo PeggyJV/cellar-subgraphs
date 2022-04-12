@@ -44,7 +44,7 @@ export function handleDeposit(event: Deposit): void {
 
   // Log cellar timeseries data
   const timestamp = event.block.timestamp;
-  const cellarDayData = loadCellarDayData(cellar, timestamp);
+  const cellarDayData = loadCellarDayData(cellar.id, timestamp);
   cellarDayData.addedLiquidity = cellarDayData.addedLiquidity.plus(liqAmount);
 
   // Log wallet (user) timeseries data
@@ -81,7 +81,7 @@ export function handleWithdraw(event: Withdraw): void {
 
   // cellarDayData - Log cellar timeseries data
   const timestamp = event.block.timestamp;
-  const cellarDayData = loadCellarDayData(cellar, timestamp);
+  const cellarDayData = loadCellarDayData(cellar.id, timestamp);
   cellarDayData.removedLiquidity =
     cellarDayData.removedLiquidity.plus(liqAmount);
 

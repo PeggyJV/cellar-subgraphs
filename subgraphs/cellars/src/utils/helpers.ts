@@ -46,13 +46,13 @@ export function loadCellar(contractAddress: Address): Cellar {
 }
 
 export function initCellarDayData(
-  cellar: Cellar,
+  cellarAddress: string,
   id: string,
   date: number
 ): CellarDayData {
   const cellarDayData = new CellarDayData(id);
 
-  cellarDayData.cellar = cellar.id;
+  cellarDayData.cellar = cellarAddress;
   cellarDayData.date = date as u32;
   cellarDayData.addedLiquidity = ZERO_BI;
   cellarDayData.removedLiquidity = ZERO_BI;
@@ -61,16 +61,26 @@ export function initCellarDayData(
   return cellarDayData;
 }
 
+export function getDayId(
+  cellarAddress: string,
+  blockTimestamp: BigInt
+): string {
+  const date = (blockTimestamp.toI32() / DAY_SECONDS) * DAY_SECONDS;
+  const id = date.toString().concat(ID_DELIMITER).concat(cellarAddress);
+
+  return id;
+}
+
 export function loadCellarDayData(
-  cellar: Cellar,
+  cellarAddress: string,
   blockTimestamp: BigInt
 ): CellarDayData {
   const date = (blockTimestamp.toI32() / DAY_SECONDS) * DAY_SECONDS;
-  const id = date.toString().concat(ID_DELIMITER).concat(cellar.id);
+  const id = date.toString().concat(ID_DELIMITER).concat(cellarAddress);
 
   let cellarDayData = CellarDayData.load(id);
   if (cellarDayData == null) {
-    cellarDayData = initCellarDayData(cellar, id, date);
+    cellarDayData = initCellarDayData(cellarAddress, id, date);
   }
 
   return cellarDayData;

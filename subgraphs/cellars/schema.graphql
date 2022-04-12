@@ -55,6 +55,9 @@ type CellarDayData @entity {
   addedLiquidity: BigInt!
   removedLiquidity: BigInt!
   numWallets: Int!
+  tvlActive: BigInt!
+  tvlInactive: BigInt!
+  tvlTotal: BigInt!
 }
 
 type WalletDayData @entity {
