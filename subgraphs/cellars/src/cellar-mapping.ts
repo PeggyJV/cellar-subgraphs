@@ -1,7 +1,6 @@
 import {
   Deposit,
   DepositToAave,
-  LiquidityRestrictionRemoved,
   Withdraw,
   WithdrawFromAave,
   Transfer as CellarShareTransferEvent,
@@ -14,9 +13,10 @@ import {
   loadCellar,
   loadCellarDayData,
   loadCellarShare,
-  loadTokenERC20,
+  loadOrCreateTokenERC20,
   loadWalletDayData,
   initCellarShareTransfer,
+  normalizeDecimals,
 } from "./utils/helpers";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 
@@ -24,9 +24,18 @@ export function handleDeposit(event: Deposit): void {
   // Cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
+  if (cellar.asset == null) {
+    return;
+  }
+
+  const cellarAsset = cellar.asset as string;
+  const asset = loadOrCreateTokenERC20(cellarAsset);
 
   // Log cellar statistics
-  const liqAmount = event.params.assets;
+  const liqAmount = normalizeDecimals(
+    event.params.assets,
+    BigInt.fromI32(asset.decimals)
+  );
   cellar.addedLiquidityAllTime = cellar.addedLiquidityAllTime.plus(liqAmount);
   cellar.tvlInactive = cellar.tvlInactive.plus(liqAmount);
   cellar.tvlTotal = cellar.tvlTotal.plus(liqAmount);
@@ -44,7 +53,7 @@ export function handleDeposit(event: Deposit): void {
 
   // Log cellar timeseries data
   const timestamp = event.block.timestamp;
-  const cellarDayData = loadCellarDayData(cellar.id, timestamp);
+  const cellarDayData = loadCellarDayData(cellar.id, timestamp, cellarAsset);
   cellarDayData.addedLiquidity = cellarDayData.addedLiquidity.plus(liqAmount);
 
   // Log wallet (user) timeseries data
@@ -71,9 +80,19 @@ export function handleWithdraw(event: Withdraw): void {
   // cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
+  if (cellar.asset == null) {
+    return;
+  }
+
+  const cellarAsset = cellar.asset as string;
+  const asset = loadOrCreateTokenERC20(cellarAsset);
 
   // removedLiquidityAllTime
-  const liqAmount = event.params.assets;
+  const liqAmount = normalizeDecimals(
+    event.params.assets,
+    BigInt.fromI32(asset.decimals)
+  );
+
   cellar.removedLiquidityAllTime =
     cellar.removedLiquidityAllTime.plus(liqAmount);
   cellar.tvlInactive = cellar.tvlInactive.minus(liqAmount);
@@ -81,7 +100,7 @@ export function handleWithdraw(event: Withdraw): void {
 
   // cellarDayData - Log cellar timeseries data
   const timestamp = event.block.timestamp;
-  const cellarDayData = loadCellarDayData(cellar.id, timestamp);
+  const cellarDayData = loadCellarDayData(cellar.id, timestamp, cellarAsset);
   cellarDayData.removedLiquidity =
     cellarDayData.removedLiquidity.plus(liqAmount);
 
@@ -118,23 +137,24 @@ export function handleWithdraw(event: Withdraw): void {
 }
 
 export function handleDepositToAave(event: DepositToAave): void {
-  const depositAmount = event.params.amount;
-  const tokenAddress = event.params.token.toHexString();
-  const token = loadTokenERC20(tokenAddress);
+  const depositAmount = event.params.assets;
+  const tokenAddress = event.params.position.toHexString();
+  const token = loadOrCreateTokenERC20(tokenAddress);
 
   // cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
   cellar.tvlActive = cellar.tvlActive.plus(depositAmount);
   cellar.tvlInactive = cellar.tvlInactive.minus(depositAmount);
+  cellar.tvlInvested = cellar.tvlInvested.plus(depositAmount);
 
   // input asset = new aave lending token
   cellar.asset = token.id;
 
-  // update maxLiquidity, see maxDeposit impl in contract
-  if (cellar.maxLiquidity.notEqual(ZERO_BI)) {
+  // update liquidityLimit, see maxDeposit impl in contract
+  if (cellar.liquidityLimit.notEqual(ZERO_BI)) {
     const decimals = TEN_BI.pow(token.decimals as u8);
-    cellar.maxLiquidity = BigInt.fromI32(50000).times(decimals);
+    cellar.liquidityLimit = BigInt.fromI32(50000).times(decimals);
   }
 
   cellar.save();
@@ -151,12 +171,32 @@ export function handleDepositToAave(event: DepositToAave): void {
 }
 
 export function handleWithdrawFromAave(event: WithdrawFromAave): void {
-  const withdrawAmount = event.params.amount;
-
   // cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
-  cellar.tvlActive = cellar.tvlActive.minus(withdrawAmount);
+  if (cellar.asset == null) {
+    return;
+  }
+
+  const cellarAsset = cellar.asset as string;
+  const asset = loadOrCreateTokenERC20(cellarAsset);
+  const withdrawAmount = normalizeDecimals(
+    event.params.assets,
+    BigInt.fromI32(asset.decimals)
+  );
+
+  if (cellar.tvlActive < withdrawAmount) {
+    cellar.tvlActive = ZERO_BI;
+  } else {
+    cellar.tvlActive = cellar.tvlActive.minus(withdrawAmount);
+  }
+
+  if (cellar.tvlInvested < withdrawAmount) {
+    cellar.tvlInvested = ZERO_BI;
+  } else {
+    cellar.tvlInvested = cellar.tvlInvested.minus(withdrawAmount);
+  }
+
   cellar.tvlInactive = cellar.tvlInactive.plus(withdrawAmount);
   cellar.save();
 
@@ -279,11 +319,38 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
   }
 }
 
-export function handleLiquidityRestrictionRemoved(
-  event: LiquidityRestrictionRemoved
-): void {
-  const cellar = loadCellar(event.address);
-  cellar.maxLiquidity = ZERO_BI;
-
-  cellar.save();
-}
+// export function handleLiquidityRestrictionRemoved(
+//   event: LiquidityRestrictionRemoved
+// ): void {
+//   const cellar = loadCellar(event.address);
+//   cellar.liquidityLimit = ZERO_BI;
+//
+//   cellar.save();
+// }
+//
+// export function handleAccruedPlatformFees(event: AccruedPlatformFees) {
+//   const cellar = loadCellar(event.address);
+//   cellar.accruedPlatformFees = cellar.accruedPlatformFees.plus(
+//     event.params.fees
+//   );
+//
+//   cellar.save();
+// }
+//
+// export function handleAccruedPerformanceFees(event: AccruedPerformanceFees) {
+//   const cellar = loadCellar(event.address);
+//   cellar.accruedPerformanceFees = cellar.accruedPerformanceFees.plus(
+//     event.params.fees
+//   );
+//
+//   cellar.save();
+// }
+//
+// export function handleBurntPerformanceFees(event: BurntPerformanceFees) {
+//   const cellar = loadCellar(event.address);
+//   cellar.burntPerformanceFees = cellar.burntPerformanceFees.plus(
+//     event.params.fees
+//   );
+//
+//   cellar.save();
+// }

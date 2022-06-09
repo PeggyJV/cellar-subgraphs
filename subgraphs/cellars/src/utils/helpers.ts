@@ -4,6 +4,7 @@ import {
   DepositWithdrawEvent,
   Cellar,
   CellarDayData,
+  CellarHourData,
   CellarShare,
   CellarShareTransfer,
   DepositWithdrawAaveEvent,
@@ -16,21 +17,18 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 export const ID_DELIMITER = "-";
 export const DAY_SECONDS = 60 * 60 * 24;
+export const HOUR_SECONDS = 60 * 60;
 
 export function initCellar(contractAddress: Address): Cellar {
   const id = contractAddress.toHexString();
   const cellar = new Cellar(id);
 
+  // TODO remove
   cellar.name = "AaveStablecoinCellar";
 
   const contract = CellarContract.bind(contractAddress);
-  cellar.asset = contract.asset().toHexString();
-  cellar.feePlatform = contract.PLATFORM_FEE();
-  cellar.feePerformance = contract.PERFORMANCE_FEE();
-
-  const token = loadTokenERC20(cellar.asset);
-  const decimals = TEN_BI.pow(token.decimals as u8); // USDC decimals = 6, assume asset starts as USDC
-  cellar.maxLiquidity = BigInt.fromI32(50000).times(decimals);
+  cellar.depositLimit = contract.depositLimit();
+  cellar.liquidityLimit = contract.liquidityLimit();
 
   return cellar;
 }
@@ -48,17 +46,31 @@ export function loadCellar(contractAddress: Address): Cellar {
 export function initCellarDayData(
   cellarAddress: string,
   id: string,
-  date: number
+  date: number,
+  assetAddress: string
 ): CellarDayData {
   const cellarDayData = new CellarDayData(id);
 
   cellarDayData.cellar = cellarAddress;
   cellarDayData.date = date as u32;
-  cellarDayData.addedLiquidity = ZERO_BI;
-  cellarDayData.removedLiquidity = ZERO_BI;
-  cellarDayData.numWallets = 0;
+  cellarDayData.asset = assetAddress;
 
   return cellarDayData;
+}
+
+export function initCellarHourData(
+  cellarAddress: string,
+  id: string,
+  date: number,
+  assetAddress: string
+): CellarHourData {
+  const cellarHourData = new CellarHourData(id);
+
+  cellarHourData.cellar = cellarAddress;
+  cellarHourData.date = date as u32;
+  cellarHourData.asset = assetAddress;
+
+  return cellarHourData;
 }
 
 export function getDayId(
@@ -73,17 +85,70 @@ export function getDayId(
 
 export function loadCellarDayData(
   cellarAddress: string,
-  blockTimestamp: BigInt
+  blockTimestamp: BigInt,
+  assetAddress: string
 ): CellarDayData {
   const date = (blockTimestamp.toI32() / DAY_SECONDS) * DAY_SECONDS;
-  const id = date.toString().concat(ID_DELIMITER).concat(cellarAddress);
+  const id = `${cellarAddress}${ID_DELIMITER}${assetAddress}${ID_DELIMITER}${date.toString()}`;
 
   let cellarDayData = CellarDayData.load(id);
   if (cellarDayData == null) {
-    cellarDayData = initCellarDayData(cellarAddress, id, date);
+    cellarDayData = initCellarDayData(cellarAddress, id, date, assetAddress);
   }
 
   return cellarDayData;
+}
+
+export function loadPrevCellarDayData(
+  cellarAddress: string,
+  blockTimestamp: BigInt,
+  assetAddress: string
+): CellarDayData {
+  const date = (blockTimestamp.toI32() / DAY_SECONDS) * DAY_SECONDS;
+  const prevDay = date - DAY_SECONDS;
+  const id = `${cellarAddress}${ID_DELIMITER}${assetAddress}${ID_DELIMITER}${prevDay.toString()}`;
+
+  let cellarDayData = CellarDayData.load(id);
+  if (cellarDayData == null) {
+    // if we are on the first snapshot after a rebalance, there will be no previous data so fake it
+    cellarDayData = new CellarDayData(id);
+  }
+
+  return cellarDayData;
+}
+
+export function loadCellarHourData(
+  cellarAddress: string,
+  blockTimestamp: BigInt,
+  assetAddress: string
+): CellarHourData {
+  const date = (blockTimestamp.toI32() / HOUR_SECONDS) * HOUR_SECONDS;
+  const id = `${cellarAddress}${ID_DELIMITER}${assetAddress}${ID_DELIMITER}${date.toString()}`;
+
+  let cellarHourData = CellarHourData.load(id);
+  if (cellarHourData == null) {
+    cellarHourData = initCellarHourData(cellarAddress, id, date, assetAddress);
+  }
+
+  return cellarHourData;
+}
+
+export function loadPrevCellarHourData(
+  cellarAddress: string,
+  blockTimestamp: BigInt,
+  assetAddress: string
+): CellarHourData {
+  const date = (blockTimestamp.toI32() / HOUR_SECONDS) * HOUR_SECONDS;
+  const prevHour = date - HOUR_SECONDS;
+  const id = `${cellarAddress}${ID_DELIMITER}${assetAddress}${ID_DELIMITER}${prevHour.toString()}`;
+
+  let cellarHourData = CellarHourData.load(id);
+  if (cellarHourData == null) {
+    // if we are on the first snapshot after a rebalance, there will be no previous data so fake it
+    cellarHourData = new CellarHourData(id);
+  }
+
+  return cellarHourData;
 }
 
 export function initWalletDayData(
@@ -245,11 +310,37 @@ export function initToken(address: string): TokenERC20 {
   return token;
 }
 
-export function loadTokenERC20(address: string): TokenERC20 {
+export function loadOrCreateTokenERC20(address: string): TokenERC20 {
   let token = TokenERC20.load(address);
   if (token == null) {
     token = initToken(address);
+    token.save();
   }
 
   return token;
+}
+
+export function convertDecimals(
+  value: BigInt,
+  fromDecimals: BigInt,
+  toDecimals: BigInt
+): BigInt {
+  const delta = toDecimals.minus(fromDecimals);
+  if (delta.equals(ZERO_BI)) {
+    return value;
+  }
+
+  const multiplier = TEN_BI.pow(delta.toI32() as u8);
+
+  if (delta.gt(ZERO_BI)) {
+    return value.times(multiplier);
+  }
+
+  return value.div(multiplier);
+}
+
+// TODO configure
+const decimals = BigInt.fromI32(18);
+export function normalizeDecimals(value: BigInt, fromDecimals: BigInt): BigInt {
+  return convertDecimals(value, fromDecimals, decimals);
 }

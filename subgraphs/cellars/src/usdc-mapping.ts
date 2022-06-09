@@ -1,33 +1,166 @@
+import { Cellar as CellarContract } from "../generated/Cellar/Cellar";
 import { Transfer } from "../generated/USDC/ERC20";
-import { CELLAR_AAVE_LATEST } from "./utils/constants";
-import { loadCellar, loadCellarDayData } from "./utils/helpers";
-import { Address } from "@graphprotocol/graph-ts";
+import { Cellar } from "../generated/schema";
+import { CELLAR_AAVE_LATEST, ZERO_BI } from "./utils/constants";
+import {
+  loadCellar,
+  loadCellarDayData,
+  loadPrevCellarDayData,
+  loadCellarHourData,
+  loadPrevCellarHourData,
+  loadOrCreateTokenERC20,
+  normalizeDecimals,
+} from "./utils/helpers";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 
 const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
 
 // We are piggy backing off of USDCs transfer event to get more granularity
-// for Cellar TVL snapshots.
+// for Cellar TVL and aToken snapshots.
 export function handleTransfer(event: Transfer): void {
   const cellar = loadCellar(cellarLatest);
-  const day = loadCellarDayData(cellar.id, event.block.timestamp);
+  const contract = CellarContract.bind(Address.fromString(cellar.id));
 
-  let shouldSave = false;
-  if (cellar.tvlActive.gt(day.tvlActive)) {
-    day.tvlActive = cellar.tvlActive;
-    shouldSave = true;
+  snapshotDay(event, cellar, contract);
+  snapshotHour(event, cellar, contract);
+}
+
+function snapshotDay(
+  event: Transfer,
+  cellar: Cellar,
+  contract: CellarContract
+): void {
+  if (cellar.asset == null) {
+    return;
+  }
+  const cellarAsset = cellar.asset as string;
+
+  const dataEntity = loadCellarDayData(
+    cellar.id,
+    event.block.timestamp,
+    cellarAsset
+  );
+
+  const timestamp = event.block.timestamp.toI32();
+  const secSinceUpdated = timestamp - dataEntity.updatedAt;
+  if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 10) {
+    return;
   }
 
-  if (cellar.tvlInactive.gt(day.tvlInactive)) {
-    day.tvlInactive = cellar.tvlInactive;
-    shouldSave = true;
+  const asset = loadOrCreateTokenERC20(cellarAsset);
+
+  dataEntity.tvlInvested = cellar.tvlInvested;
+
+  const activeAssetsResult = contract.try_activeAssets();
+  if (activeAssetsResult.reverted) {
+    log.warning("Could not call cellar.activeAssets: {}", [cellar.id]);
+
+    dataEntity.tvlActive = ZERO_BI;
+    dataEntity.earnings = ZERO_BI;
+  } else {
+    const prevEntity = loadPrevCellarDayData(
+      cellar.id,
+      event.block.timestamp,
+      cellarAsset
+    );
+
+    const activeAssets = normalizeDecimals(
+      activeAssetsResult.value,
+      BigInt.fromI32(asset.decimals)
+    );
+
+    dataEntity.tvlActive = activeAssets;
+    const accumulated = activeAssets.minus(dataEntity.tvlInvested);
+    const prevAccumulated = prevEntity.tvlActive.minus(prevEntity.tvlInvested);
+    dataEntity.earnings = accumulated.minus(prevAccumulated);
   }
 
-  if (cellar.tvlTotal.gt(day.tvlTotal)) {
-    day.tvlTotal = cellar.tvlTotal;
-    shouldSave = true;
+  const inactiveAssetsResult = contract.try_inactiveAssets();
+  if (inactiveAssetsResult.reverted) {
+    log.warning("Could not call cellar.inactiveAssets: {}", [cellar.id]);
+
+    dataEntity.tvlInactive = ZERO_BI;
+  } else {
+    const inactiveAssets = normalizeDecimals(
+      inactiveAssetsResult.value,
+      BigInt.fromI32(asset.decimals)
+    );
+    dataEntity.tvlInactive = inactiveAssets;
   }
 
-  if (shouldSave) {
-    day.save();
+  dataEntity.tvlTotal = cellar.tvlActive.plus(cellar.tvlInactive);
+  dataEntity.updatedAt = timestamp;
+
+  dataEntity.save();
+}
+
+function snapshotHour(
+  event: Transfer,
+  cellar: Cellar,
+  contract: CellarContract
+): void {
+  if (cellar.asset == null) {
+    return;
   }
+  const cellarAsset = cellar.asset as string;
+
+  const dataEntity = loadCellarHourData(
+    cellar.id,
+    event.block.timestamp,
+    cellarAsset
+  );
+
+  const timestamp = event.block.timestamp.toI32();
+  const secSinceUpdated = timestamp - dataEntity.updatedAt;
+  if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 10) {
+    // Bail if we updated in the last 5 minutes
+    return;
+  }
+
+  const asset = loadOrCreateTokenERC20(cellarAsset);
+
+  dataEntity.tvlInvested = cellar.tvlInvested;
+
+  const activeAssetsResult = contract.try_activeAssets();
+  if (activeAssetsResult.reverted) {
+    log.warning("Could not call cellar.activeAssets: {}", [cellar.id]);
+
+    dataEntity.tvlActive = ZERO_BI;
+    dataEntity.earnings = ZERO_BI;
+  } else {
+    const prevEntity = loadPrevCellarHourData(
+      cellar.id,
+      event.block.timestamp,
+      cellarAsset
+    );
+
+    const activeAssets = normalizeDecimals(
+      activeAssetsResult.value,
+      BigInt.fromI32(asset.decimals)
+    );
+
+    dataEntity.tvlActive = activeAssets;
+    const accumulated = activeAssets.minus(dataEntity.tvlInvested);
+    const prevAccumulated = prevEntity.tvlActive.minus(prevEntity.tvlInvested);
+    dataEntity.earnings = accumulated.minus(prevAccumulated);
+  }
+
+  const inactiveAssetsResult = contract.try_inactiveAssets();
+  if (inactiveAssetsResult.reverted) {
+    log.warning("Could not call cellar.inactiveAssets: {}", [cellar.id]);
+
+    dataEntity.tvlInactive = ZERO_BI;
+  } else {
+    const inactiveAssets = normalizeDecimals(
+      inactiveAssetsResult.value,
+      BigInt.fromI32(asset.decimals)
+    );
+
+    dataEntity.tvlInactive = inactiveAssets;
+  }
+
+  dataEntity.tvlTotal = cellar.tvlActive.plus(cellar.tvlInactive);
+  dataEntity.updatedAt = timestamp;
+
+  dataEntity.save();
 }

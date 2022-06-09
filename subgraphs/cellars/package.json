@@ -6,10 +6,10 @@
   "scripts": {
     "build": "graph build",
     "codegen": "graph codegen",
-    "create-local": "graph create --node http://localhost:8020 sommelier/cellars",
-    "remove-local": "graph remove --node http://localhost:8020 sommelier/cellars",
-    "deploy-local": "graph deploy --node http://localhost:8020 --ipfs http://localhost:5001 sommelier/cellars",
-    "deploy-hosted": "graph deploy --product hosted-service elkdao/cellars",
+    "create-local": "graph create --node http://localhost:8020 peggyjv/cellars",
+    "remove-local": "graph remove --node http://localhost:8020 peggyjv/cellars",
+    "deploy-local": "graph deploy --node http://localhost:8020 --ipfs http://localhost:5001 peggyjv/cellars",
+    "deploy-hosted": "graph deploy --product hosted-service peggyjv/cellars",
     "test": "graph test"
   }
 }

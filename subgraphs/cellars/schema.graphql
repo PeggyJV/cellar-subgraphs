@@ -10,20 +10,25 @@ type Wallet @entity {
 type Cellar @entity {
   id: ID! # contract address
   name: String!
-  asset: TokenERC20! # token address
+  asset: TokenERC20 # aave contract address
+
   tvlActive: BigInt!
   tvlInactive: BigInt!
+  tvlInvested: BigInt! # deposited to aave
   tvlTotal: BigInt!
+
   addedLiquidityAllTime: BigInt!
   removedLiquidityAllTime: BigInt!
   numWalletsAllTime: Int!
   numWalletsActive: Int!
   sharesTotal: BigInt!
 
-  feePerformance: BigInt!
-  feePlatform: BigInt!
+  accruedPlatformFees: BigInt!
+  accruedPerformanceFees: BigInt!
+  burntPerformanceFees: BigInt!
 
-  maxLiquidity: BigInt! # Max Deposits
+  depositLimit: BigInt!
+  liquidityLimit: BigInt! # Max Deposits
 
   dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
   depositWithdrawEvents: [DepositWithdrawAaveEvent!]! @derivedFrom(field: "cellar")
@@ -31,7 +36,7 @@ type Cellar @entity {
 
 type CellarShare @entity {
   id: ID! # <cellar address>-<user wallet>
-  cellar: Cellar!  
+  cellar: Cellar!
   wallet: Wallet!  # Account that owns the cellar shares
   balance: BigInt! # Balance of cellar shares in 'wallet'
 }
@@ -52,12 +57,34 @@ type CellarDayData @entity {
   id: ID! # timestamp at the start of a day Date.now / 86400
   date: Int! # epoch timestamp
   cellar: Cellar!
+  asset: TokenERC20!
+  updatedAt: Int!
+
   addedLiquidity: BigInt!
   removedLiquidity: BigInt!
   numWallets: Int!
+
   tvlActive: BigInt!
   tvlInactive: BigInt!
+  tvlInvested: BigInt!
   tvlTotal: BigInt!
+
+  earnings: BigInt!
+}
+
+type CellarHourData @entity {
+  id: ID! # ??
+  date: Int! # epoch timestamp
+  cellar: Cellar!
+  asset: TokenERC20
+  updatedAt: Int!
+
+  tvlActive: BigInt!
+  tvlInactive: BigInt!
+  tvlInvested: BigInt!
+  tvlTotal: BigInt!
+
+  earnings: BigInt!
 }
 
 type WalletDayData @entity {
