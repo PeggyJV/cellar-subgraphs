@@ -23,6 +23,8 @@ export function handleTransfer(event: Transfer): void {
 
   snapshotDay(event, cellar, contract);
   snapshotHour(event, cellar, contract);
+
+  cellar.save();
 }
 
 function snapshotDay(
@@ -44,6 +46,7 @@ function snapshotDay(
   const timestamp = event.block.timestamp.toI32();
   const secSinceUpdated = timestamp - dataEntity.updatedAt;
   if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 10) {
+    // Bail if we updated in the last 10 minutes
     return;
   }
 
@@ -73,6 +76,10 @@ function snapshotDay(
     const accumulated = activeAssets.minus(dataEntity.tvlInvested);
     const prevAccumulated = prevEntity.tvlActive.minus(prevEntity.tvlInvested);
     dataEntity.earnings = accumulated.minus(prevAccumulated);
+
+    if (dataEntity.earnings < ZERO_BI) {
+      dataEntity.earnings = ZERO_BI;
+    }
   }
 
   const inactiveAssetsResult = contract.try_inactiveAssets();
@@ -88,7 +95,7 @@ function snapshotDay(
     dataEntity.tvlInactive = inactiveAssets;
   }
 
-  dataEntity.tvlTotal = cellar.tvlActive.plus(cellar.tvlInactive);
+  dataEntity.tvlTotal = dataEntity.tvlActive.plus(dataEntity.tvlInactive);
   dataEntity.updatedAt = timestamp;
 
   dataEntity.save();
@@ -113,7 +120,7 @@ function snapshotHour(
   const timestamp = event.block.timestamp.toI32();
   const secSinceUpdated = timestamp - dataEntity.updatedAt;
   if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 10) {
-    // Bail if we updated in the last 5 minutes
+    // Bail if we updated in the last 10 minutes
     return;
   }
 
@@ -143,6 +150,10 @@ function snapshotHour(
     const accumulated = activeAssets.minus(dataEntity.tvlInvested);
     const prevAccumulated = prevEntity.tvlActive.minus(prevEntity.tvlInvested);
     dataEntity.earnings = accumulated.minus(prevAccumulated);
+
+    if (dataEntity.earnings < ZERO_BI) {
+      dataEntity.earnings = ZERO_BI;
+    }
   }
 
   const inactiveAssetsResult = contract.try_inactiveAssets();
@@ -159,8 +170,12 @@ function snapshotHour(
     dataEntity.tvlInactive = inactiveAssets;
   }
 
-  dataEntity.tvlTotal = cellar.tvlActive.plus(cellar.tvlInactive);
+  dataEntity.tvlTotal = dataEntity.tvlActive.plus(dataEntity.tvlInactive);
   dataEntity.updatedAt = timestamp;
+
+  cellar.tvlActive = dataEntity.tvlActive;
+  cellar.tvlInactive = dataEntity.tvlInactive;
+  cellar.tvlTotal = dataEntity.tvlTotal;
 
   dataEntity.save();
 }
