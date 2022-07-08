@@ -45,8 +45,8 @@ function snapshotDay(
 
   const timestamp = event.block.timestamp.toI32();
   const secSinceUpdated = timestamp - dataEntity.updatedAt;
-  if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 10) {
-    // Bail if we updated in the last 10 minutes
+  if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 1) {
+    // Bail if we updated in the last minute
     return;
   }
 
@@ -54,7 +54,7 @@ function snapshotDay(
 
   dataEntity.tvlInvested = cellar.tvlInvested;
 
-  const activeAssetsResult = contract.try_activeAssets();
+  const activeAssetsResult = contract.try_totalBalance();
   if (activeAssetsResult.reverted) {
     log.warning("Could not call cellar.activeAssets: {}", [cellar.id]);
 
@@ -82,7 +82,7 @@ function snapshotDay(
     }
   }
 
-  const inactiveAssetsResult = contract.try_inactiveAssets();
+  const inactiveAssetsResult = contract.try_totalHoldings();
   if (inactiveAssetsResult.reverted) {
     log.warning("Could not call cellar.inactiveAssets: {}", [cellar.id]);
 
@@ -119,8 +119,8 @@ function snapshotHour(
 
   const timestamp = event.block.timestamp.toI32();
   const secSinceUpdated = timestamp - dataEntity.updatedAt;
-  if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 10) {
-    // Bail if we updated in the last 10 minutes
+  if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 1) {
+    // Bail if we updated in the last minute
     return;
   }
 
@@ -128,7 +128,7 @@ function snapshotHour(
 
   dataEntity.tvlInvested = cellar.tvlInvested;
 
-  const activeAssetsResult = contract.try_activeAssets();
+  const activeAssetsResult = contract.try_totalBalance();
   if (activeAssetsResult.reverted) {
     log.warning("Could not call cellar.activeAssets: {}", [cellar.id]);
 
@@ -156,7 +156,7 @@ function snapshotHour(
     }
   }
 
-  const inactiveAssetsResult = contract.try_inactiveAssets();
+  const inactiveAssetsResult = contract.try_totalHoldings();
   if (inactiveAssetsResult.reverted) {
     log.warning("Could not call cellar.inactiveAssets: {}", [cellar.id]);
 

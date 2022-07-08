@@ -1,8 +1,8 @@
 import {
   Deposit,
-  DepositToAave,
+  DepositIntoPosition,
   Withdraw,
-  WithdrawFromAave,
+  WithdrawFromPosition,
   Transfer as CellarShareTransferEvent,
 } from "../generated/Cellar/Cellar";
 import { Wallet } from "../generated/schema";
@@ -19,15 +19,12 @@ import {
   initCellarShareTransfer,
   normalizeDecimals,
 } from "./utils/helpers";
-import { Address, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 
 export function handleDeposit(event: Deposit): void {
   // Cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
-  if (cellar.asset == null) {
-    return;
-  }
 
   const cellarAsset = cellar.asset as string;
   const asset = loadOrCreateTokenERC20(cellarAsset);
@@ -38,6 +35,7 @@ export function handleDeposit(event: Deposit): void {
     BigInt.fromI32(asset.decimals)
   );
   cellar.addedLiquidityAllTime = cellar.addedLiquidityAllTime.plus(liqAmount);
+  cellar.currentDeposits = cellar.currentDeposits.plus(liqAmount);
 
   // Wallet
   const walletAddress = event.params.owner.toHexString();
@@ -45,10 +43,15 @@ export function handleDeposit(event: Deposit): void {
   if (wallet == null) {
     // Create a new wallet if we haven't seen it before
     wallet = new Wallet(walletAddress);
-    wallet.save();
+    wallet.totalWithdrawals = ZERO_BI;
+    wallet.currentDeposits = ZERO_BI;
+    wallet.totalDeposits = ZERO_BI;
     cellar.numWalletsAllTime += 1;
     cellar.numWalletsActive += 1;
   }
+
+  wallet.currentDeposits = wallet.currentDeposits.plus(liqAmount);
+  wallet.totalDeposits = wallet.totalDeposits.plus(liqAmount);
 
   // Log cellar timeseries data
   const timestamp = event.block.timestamp;
@@ -77,6 +80,7 @@ export function handleDeposit(event: Deposit): void {
   cellarDayData.save();
   cellarHourData.save();
   walletDayData.save();
+  wallet.save();
 }
 
 export function handleWithdraw(event: Withdraw): void {
@@ -115,10 +119,28 @@ export function handleWithdraw(event: Withdraw): void {
   if (wallet == null) {
     // Create a new wallet if we haven't seen it before
     wallet = new Wallet(walletAddress);
+    wallet.totalWithdrawals = ZERO_BI;
+    wallet.currentDeposits = ZERO_BI;
+    wallet.totalDeposits = ZERO_BI;
     wallet.save();
     cellar.numWalletsAllTime += 1;
     cellar.numWalletsActive += 1;
   }
+
+  const prevTotalWithdrawals = wallet.totalWithdrawals;
+  wallet.totalWithdrawals = wallet.totalWithdrawals.plus(liqAmount);
+
+  // Ensure cellar.currentDeposits is not a negative number
+  let depositWithdrawAmount = liqAmount;
+  if (prevTotalWithdrawals >= wallet.totalDeposits) {
+    // User has alread withdrawn all deposits, current withdraws are gains only.
+    depositWithdrawAmount = ZERO_BI;
+  } else if (wallet.totalWithdrawals > wallet.totalDeposits) {
+    // This withdrawal included gains that exceeded the original deposits
+    depositWithdrawAmount = wallet.totalDeposits.minus(prevTotalWithdrawals);
+  }
+  cellar.currentDeposits = cellar.currentDeposits.minus(depositWithdrawAmount);
+  wallet.currentDeposits = wallet.currentDeposits.minus(depositWithdrawAmount);
 
   //walletDayData - Log wallet (user) timeseries data
   const walletDayData = loadWalletDayData(wallet, timestamp);
@@ -140,9 +162,10 @@ export function handleWithdraw(event: Withdraw): void {
   cellarDayData.save();
   cellarHourData.save();
   walletDayData.save();
+  wallet.save();
 }
 
-export function handleDepositToAave(event: DepositToAave): void {
+export function handleDepositIntoPosition(event: DepositIntoPosition): void {
   const tokenAddress = event.params.position.toHexString();
 
   // cellar
@@ -178,7 +201,7 @@ export function handleDepositToAave(event: DepositToAave): void {
   );
 }
 
-export function handleWithdrawFromAave(event: WithdrawFromAave): void {
+export function handleWithdrawFromPosition(event: WithdrawFromPosition): void {
   // cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
@@ -243,6 +266,9 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
     if (wallet == null) {
       // Create a new wallet if we haven't seen it before
       wallet = new Wallet(walletAddress);
+      wallet.totalWithdrawals = ZERO_BI;
+      wallet.currentDeposits = ZERO_BI;
+      wallet.totalDeposits = ZERO_BI;
       wallet.save();
       cellar.numWalletsAllTime += 1;
       cellar.numWalletsActive += 1;
@@ -285,6 +311,9 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
     if (wallet == null) {
       // Create a new wallet if we haven't seen it before
       wallet = new Wallet(walletAddress);
+      wallet.totalWithdrawals = ZERO_BI;
+      wallet.currentDeposits = ZERO_BI;
+      wallet.totalDeposits = ZERO_BI;
       wallet.save();
       cellar.numWalletsAllTime += 1;
       cellar.numWalletsActive += 1;
@@ -319,39 +348,3 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
     // TransferEvent is neither a mint nor a burn.
   }
 }
-
-// export function handleLiquidityRestrictionRemoved(
-//   event: LiquidityRestrictionRemoved
-// ): void {
-//   const cellar = loadCellar(event.address);
-//   cellar.liquidityLimit = ZERO_BI;
-//
-//   cellar.save();
-// }
-//
-// export function handleAccruedPlatformFees(event: AccruedPlatformFees) {
-//   const cellar = loadCellar(event.address);
-//   cellar.accruedPlatformFees = cellar.accruedPlatformFees.plus(
-//     event.params.fees
-//   );
-//
-//   cellar.save();
-// }
-//
-// export function handleAccruedPerformanceFees(event: AccruedPerformanceFees) {
-//   const cellar = loadCellar(event.address);
-//   cellar.accruedPerformanceFees = cellar.accruedPerformanceFees.plus(
-//     event.params.fees
-//   );
-//
-//   cellar.save();
-// }
-//
-// export function handleBurntPerformanceFees(event: BurntPerformanceFees) {
-//   const cellar = loadCellar(event.address);
-//   cellar.burntPerformanceFees = cellar.burntPerformanceFees.plus(
-//     event.params.fees
-//   );
-//
-//   cellar.save();
-// }

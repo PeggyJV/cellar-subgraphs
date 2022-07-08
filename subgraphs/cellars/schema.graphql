@@ -1,5 +1,8 @@
 type Wallet @entity {
   id: ID! # wallet address
+  currentDeposits: BigInt!
+  totalDeposits: BigInt!
+  totalWithdrawals: BigInt!
   cellarShares: [CellarShare!]! @derivedFrom(field: "wallet")
   cellarShareTransferEvents: [CellarShareTransfer!]!
     @derivedFrom(field: "wallet")
@@ -10,22 +13,19 @@ type Wallet @entity {
 type Cellar @entity {
   id: ID! # contract address
   name: String!
-  asset: TokenERC20 # aave contract address
+  asset: TokenERC20! # aave contract address
 
   tvlActive: BigInt!
   tvlInactive: BigInt!
-  tvlInvested: BigInt! # deposited to aave
+  tvlInvested: BigInt! # amount initially deposited to aave
   tvlTotal: BigInt!
 
+  currentDeposits: BigInt!
   addedLiquidityAllTime: BigInt!
   removedLiquidityAllTime: BigInt!
   numWalletsAllTime: Int!
   numWalletsActive: Int!
   sharesTotal: BigInt!
-
-  accruedPlatformFees: BigInt!
-  accruedPerformanceFees: BigInt!
-  burntPerformanceFees: BigInt!
 
   depositLimit: BigInt!
   liquidityLimit: BigInt! # Max Deposits
@@ -78,6 +78,10 @@ type CellarHourData @entity {
   cellar: Cellar!
   asset: TokenERC20
   updatedAt: Int!
+
+  addedLiquidity: BigInt!
+  removedLiquidity: BigInt!
+  numWallets: Int!
 
   tvlActive: BigInt!
   tvlInactive: BigInt!

@@ -23,12 +23,24 @@ export function initCellar(contractAddress: Address): Cellar {
   const id = contractAddress.toHexString();
   const cellar = new Cellar(id);
 
-  // TODO remove
-  cellar.name = "AaveStablecoinCellar";
-
+  // Fetch data from chain
   const contract = CellarContract.bind(contractAddress);
+  cellar.name = contract.name();
+  cellar.asset = contract.asset().toHexString();
   cellar.depositLimit = contract.depositLimit();
   cellar.liquidityLimit = contract.liquidityLimit();
+
+  // Initialize
+  cellar.tvlActive = ZERO_BI;
+  cellar.tvlInactive = ZERO_BI;
+  cellar.tvlInvested = ZERO_BI;
+  cellar.tvlTotal = ZERO_BI;
+  cellar.currentDeposits = ZERO_BI;
+  cellar.addedLiquidityAllTime = ZERO_BI;
+  cellar.removedLiquidityAllTime = ZERO_BI;
+  cellar.numWalletsAllTime = 0;
+  cellar.numWalletsActive = 0;
+  cellar.sharesTotal = ZERO_BI;
 
   return cellar;
 }
@@ -49,13 +61,22 @@ export function initCellarDayData(
   date: number,
   assetAddress: string
 ): CellarDayData {
-  const cellarDayData = new CellarDayData(id);
+  const entity = new CellarDayData(id);
 
-  cellarDayData.cellar = cellarAddress;
-  cellarDayData.date = date as u32;
-  cellarDayData.asset = assetAddress;
+  entity.date = date as u32;
+  entity.cellar = cellarAddress;
+  entity.asset = assetAddress;
+  entity.updatedAt = 0;
+  entity.addedLiquidity = ZERO_BI;
+  entity.removedLiquidity = ZERO_BI;
+  entity.numWallets = 0;
+  entity.tvlActive = ZERO_BI;
+  entity.tvlInactive = ZERO_BI;
+  entity.tvlInvested = ZERO_BI;
+  entity.tvlTotal = ZERO_BI;
+  entity.earnings = ZERO_BI;
 
-  return cellarDayData;
+  return entity;
 }
 
 export function initCellarHourData(
@@ -64,13 +85,22 @@ export function initCellarHourData(
   date: number,
   assetAddress: string
 ): CellarHourData {
-  const cellarHourData = new CellarHourData(id);
+  const entity = new CellarHourData(id);
 
-  cellarHourData.cellar = cellarAddress;
-  cellarHourData.date = date as u32;
-  cellarHourData.asset = assetAddress;
+  entity.date = date as u32;
+  entity.cellar = cellarAddress;
+  entity.asset = assetAddress;
+  entity.updatedAt = 0;
+  entity.addedLiquidity = ZERO_BI;
+  entity.removedLiquidity = ZERO_BI;
+  entity.numWallets = 0;
+  entity.tvlActive = ZERO_BI;
+  entity.tvlInactive = ZERO_BI;
+  entity.tvlInvested = ZERO_BI;
+  entity.tvlTotal = ZERO_BI;
+  entity.earnings = ZERO_BI;
 
-  return cellarHourData;
+  return entity;
 }
 
 export function getDayId(
@@ -111,7 +141,12 @@ export function loadPrevCellarDayData(
   let cellarDayData = CellarDayData.load(id);
   if (cellarDayData == null) {
     // if we are on the first snapshot after a rebalance, there will be no previous data so fake it
-    cellarDayData = new CellarDayData(id);
+    cellarDayData = initCellarDayData(
+      cellarAddress,
+      id,
+      blockTimestamp.toI32(),
+      assetAddress
+    );
   }
 
   return cellarDayData;
@@ -145,7 +180,12 @@ export function loadPrevCellarHourData(
   let cellarHourData = CellarHourData.load(id);
   if (cellarHourData == null) {
     // if we are on the first snapshot after a rebalance, there will be no previous data so fake it
-    cellarHourData = new CellarHourData(id);
+    cellarHourData = initCellarHourData(
+      cellarAddress,
+      id,
+      blockTimestamp.toI32(),
+      assetAddress
+    );
   }
 
   return cellarHourData;
@@ -156,14 +196,14 @@ export function initWalletDayData(
   id: string,
   date: number
 ): WalletDayData {
-  const walletDayData = new WalletDayData(id);
+  const entity = new WalletDayData(id);
 
-  walletDayData.wallet = wallet.id;
-  walletDayData.date = date as u32;
-  walletDayData.addedLiquidity = ZERO_BI;
-  walletDayData.removedLiquidity = ZERO_BI;
+  entity.date = date as u32;
+  entity.wallet = wallet.id;
+  entity.addedLiquidity = ZERO_BI;
+  entity.removedLiquidity = ZERO_BI;
 
-  return walletDayData;
+  return entity;
 }
 
 export function loadWalletDayData(
@@ -191,8 +231,8 @@ export function initCellarShare(cellar: Cellar, wallet: Wallet): CellarShare {
   const balanceInit = ZERO_BI;
 
   let cellarShare = new CellarShare(cellarShareID);
-  cellarShare.wallet = wallet.id;
   cellarShare.cellar = cellar.id;
+  cellarShare.wallet = wallet.id;
   cellarShare.balance = balanceInit;
 
   return cellarShare;
