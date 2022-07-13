@@ -4,6 +4,7 @@ import {
   Withdraw,
   WithdrawFromPosition,
   Transfer as CellarShareTransferEvent,
+  LiquidityLimitChanged,
 } from "../generated/Cellar/Cellar";
 import { Wallet } from "../generated/schema";
 import { ZERO_BI, TEN_BI } from "./utils/constants";
@@ -180,14 +181,8 @@ export function handleDepositIntoPosition(event: DepositIntoPosition): void {
     event.params.assets,
     BigInt.fromI32(token.decimals)
   );
+
   cellar.tvlInvested = cellar.tvlInvested.plus(depositAmount);
-
-  // update liquidityLimit, see maxDeposit impl in contract
-  if (cellar.liquidityLimit.notEqual(ZERO_BI)) {
-    const decimals = TEN_BI.pow(token.decimals as u8);
-    cellar.liquidityLimit = BigInt.fromI32(50000).times(decimals);
-  }
-
   cellar.save();
 
   // createDepositWithdrawAaveEvent
@@ -347,4 +342,15 @@ export function handleTransfer(event: CellarShareTransferEvent): void {
   } else {
     // TransferEvent is neither a mint nor a burn.
   }
+}
+
+export function handleLiquidityLimitChanged(
+  event: LiquidityLimitChanged
+): void {
+  // cellar
+  const cellarAddress = event.address;
+  const cellar = loadCellar(cellarAddress);
+
+  cellar.liquidityLimit = event.params.newLimit;
+  cellar.save();
 }

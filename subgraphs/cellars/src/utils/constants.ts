@@ -4,4 +4,4 @@ export const ZERO_BI = BigInt.fromI32(0);
 export const TEN_BI = BigInt.fromI32(10);
 
 // TODO: Replace me with deployed cellar address
-export const CELLAR_AAVE_LATEST = "0xd15135141f1217b8863cb1431ad71309ef22ceda";
+export const CELLAR_AAVE_LATEST = "0x7bad5df5e11151dc5ee1a648800057c5c934c0d5";
