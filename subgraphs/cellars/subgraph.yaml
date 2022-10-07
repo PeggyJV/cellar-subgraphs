@@ -42,6 +42,34 @@ dataSources:
           handler: handleLiquidityLimitChanged
       file: ./src/cellar-mapping.ts
   - kind: ethereum
+    name: CellarClearGateA
+    network: mainnet
+    source:
+      address: '0xa953f0c594365b821a847e7b9f4722e338526699'
+      abi: ClearGateCellar
+      startBlock: 15634634
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+      abis:
+        - name: ClearGateCellar
+          file: ./abis/ClearGateCellar.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
     name: USDC
     network: mainnet
     source:
@@ -54,9 +82,12 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - CellarDayData
+        - CellarHourData
       abis:
         - name: Cellar
           file: ./abis/AaveV2StablecoinCellar.json
+        - name: ClearGateCellar
+          file: ./abis/ClearGateCellar.json
         - name: ERC20
           file: ./abis/ERC20.json
       eventHandlers:

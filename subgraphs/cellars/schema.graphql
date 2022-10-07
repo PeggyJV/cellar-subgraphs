@@ -3,12 +3,15 @@ type Wallet @entity {
   currentDeposits: BigInt!
   totalDeposits: BigInt!
   totalWithdrawals: BigInt!
+  cellarData: [WalletCellarData!]! @derivedFrom(field: "wallet")
   cellarShares: [WalletCellarShare!]! @derivedFrom(field: "wallet")
   dayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
 }
 
 type WalletCellarData @entity {
   id: ID! # wallet address - cellar address
+  wallet: Wallet!
+  walletAddress: String!
   currentDeposits: BigInt!
   totalDeposits: BigInt!
   totalWithdrawals: BigInt!
