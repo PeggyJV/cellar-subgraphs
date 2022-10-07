@@ -7,17 +7,14 @@ import {
   LiquidityLimitChanged,
 } from "../generated/Cellar/Cellar";
 import { Wallet } from "../generated/schema";
-import { ZERO_BI, TEN_BI } from "./utils/constants";
+import { ZERO_BI } from "./utils/constants";
 import {
-  createDepositWithdrawEvent,
-  createAaveDepositWithdrawEvent,
   loadCellar,
   loadCellarDayData,
   loadCellarHourData,
-  loadCellarShare,
   loadOrCreateTokenERC20,
+  loadWalletCellarShare,
   loadWalletDayData,
-  initCellarShareTransfer,
   normalizeDecimals,
 } from "./utils/helpers";
 import { Address, BigInt, log } from "@graphprotocol/graph-ts";
@@ -65,16 +62,6 @@ export function handleDeposit(event: Deposit): void {
   // Log wallet (user) timeseries data
   const walletDayData = loadWalletDayData(wallet, timestamp);
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(liqAmount);
-
-  // Log the actual Deposit event
-  createDepositWithdrawEvent(
-    timestamp,
-    cellar.id,
-    wallet.id,
-    liqAmount,
-    event.transaction.hash.toHexString(),
-    event.block.number
-  );
 
   // Save the entities we've modified
   cellar.save();
@@ -148,16 +135,6 @@ export function handleWithdraw(event: Withdraw): void {
   walletDayData.removedLiquidity =
     walletDayData.removedLiquidity.plus(liqAmount);
 
-  // Log the event, cellarRemoveLiquidity, as `DepositWithdrawEvent`
-  createDepositWithdrawEvent(
-    timestamp,
-    cellar.id,
-    wallet.id,
-    liqAmount.neg(),
-    event.transaction.hash.toHexString(),
-    event.block.number
-  );
-
   // Save entities we've modified
   cellar.save();
   cellarDayData.save();
@@ -184,16 +161,6 @@ export function handleDepositIntoPosition(event: DepositIntoPosition): void {
 
   cellar.tvlInvested = cellar.tvlInvested.plus(depositAmount);
   cellar.save();
-
-  // createAaveDepositWithdrawEvent
-  const timestamp = event.block.timestamp;
-  createAaveDepositWithdrawEvent(
-    timestamp,
-    cellar.id,
-    depositAmount,
-    event.transaction.hash.toHexString(),
-    event.block.number
-  );
 }
 
 export function handleWithdrawFromPosition(event: WithdrawFromPosition): void {
@@ -218,16 +185,6 @@ export function handleWithdrawFromPosition(event: WithdrawFromPosition): void {
   }
 
   cellar.save();
-
-  // createEvent
-  const timestamp = event.block.timestamp;
-  createAaveDepositWithdrawEvent(
-    timestamp,
-    cellar.id,
-    withdrawAmount.neg(),
-    event.transaction.hash.toHexString(),
-    event.block.number
-  );
 }
 
 export function handleTransfer(event: Transfer): void {
@@ -271,24 +228,9 @@ export function handleTransfer(event: Transfer): void {
     }
 
     // Init cellarShare
-    const cellarShare = loadCellarShare(wallet, cellar);
+    const cellarShare = loadWalletCellarShare(wallet, cellar);
     cellarShare.balance = cellarShare.balance.plus(transferAmount);
     cellarShare.save();
-
-    // cellarsharetransfer
-    const timestamp = event.block.timestamp;
-    const txHash = event.transaction.hash.toHexString();
-    const cellarShareTransfer = initCellarShareTransfer(
-      from.toHexString(),
-      to.toHexString(),
-      cellar,
-      wallet,
-      transferAmount,
-      event.block.number,
-      txHash,
-      timestamp
-    );
-    cellarShareTransfer.save();
   } else if (isBurn) {
     /* From ERC20.sol
     event Transfer(address indexed from, address indexed to, uint256 amount);
@@ -315,7 +257,7 @@ export function handleTransfer(event: Transfer): void {
     }
 
     // Init cellarShare
-    const cellarShare = loadCellarShare(wallet, cellar);
+    const cellarShare = loadWalletCellarShare(wallet, cellar);
     cellarShare.balance = cellarShare.balance.minus(transferAmount);
     if (cellarShare.balance == ZERO_BI) {
       // Lower the 'numWallets' of the cellar in the case balance is zero.
@@ -323,24 +265,9 @@ export function handleTransfer(event: Transfer): void {
       cellar.save();
     }
     cellarShare.save();
-
-    // cellarsharetransfer
-    const timestamp = event.block.timestamp;
-    const txHash = event.transaction.hash.toHexString();
-    const cellarShareTransfer = initCellarShareTransfer(
-      from.toHexString(),
-      to.toHexString(),
-      cellar,
-      wallet,
-      transferAmount,
-      event.block.number,
-      txHash,
-      timestamp
-    );
-
-    cellarShareTransfer.save();
   } else {
     // TransferEvent is neither a mint nor a burn.
+    // TODO
   }
 }
 

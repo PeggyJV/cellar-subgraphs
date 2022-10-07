@@ -16,14 +16,12 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - Wallet
-        - Cellar
-        - CellarShare
-        - CellarShareTransfer
-        - CellarDayData
+        - WalletCellarShare
         - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
         - TokenERC20
-        - DepositWithdrawEvent
-        - AaveDepositWithdrawEvent
       abis:
         - name: Cellar
           file: ./abis/AaveV2StablecoinCellar.json

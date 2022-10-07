@@ -1,19 +1,16 @@
 import { Cellar as CellarContract } from "../../generated/Cellar/Cellar";
 import { ERC20 } from "../../generated/Cellar/ERC20";
 import {
-  DepositWithdrawEvent,
   Cellar,
   CellarDayData,
   CellarHourData,
-  CellarShare,
-  CellarShareTransfer,
-  AaveDepositWithdrawEvent,
   TokenERC20,
   Wallet,
+  WalletCellarShare,
   WalletDayData,
 } from "../../generated/schema";
 import { ZERO_BI, TEN_BI } from "./constants";
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 
 export const ID_DELIMITER = "-";
 export const DAY_SECONDS = 60 * 60 * 24;
@@ -224,13 +221,16 @@ export function loadWalletDayData(
 /**
  * @param  {Cellar} cellar The cellar for which shares are owned.
  * @param  {Wallet} wallet The wallet that owns the shares.
- * @returns CellarShare
+ * @returns WalletWalletCellarShare
  */
-export function initCellarShare(cellar: Cellar, wallet: Wallet): CellarShare {
+export function initWalletCellarShare(
+  cellar: Cellar,
+  wallet: Wallet
+): WalletCellarShare {
   const cellarShareID = wallet.id + "-" + cellar.id;
   const balanceInit = ZERO_BI;
 
-  let cellarShare = new CellarShare(cellarShareID);
+  let cellarShare = new WalletCellarShare(cellarShareID);
   cellarShare.cellar = cellar.id;
   cellarShare.wallet = wallet.id;
   cellarShare.balance = balanceInit;
@@ -238,98 +238,25 @@ export function initCellarShare(cellar: Cellar, wallet: Wallet): CellarShare {
   return cellarShare;
 }
 
-/** Loads the `CellarShare` corresponding to the given wallet and cellar.
+/** Loads the `WalletCellarShare` corresponding to the given wallet and cellar.
  * @param  {Wallet} wallet
  * @param  {Cellar} cellar
- * @returns CellarShare
+ * @returns WalletCellarShare
  */
-export function loadCellarShare(wallet: Wallet, cellar: Cellar): CellarShare {
+export function loadWalletCellarShare(
+  wallet: Wallet,
+  cellar: Cellar
+): WalletCellarShare {
   const walletID = wallet.id;
   const cellarID = cellar.id;
   const cellarShareID = walletID + "-" + cellarID;
 
-  let cellarShare = CellarShare.load(cellarShareID);
+  let cellarShare = WalletCellarShare.load(cellarShareID);
   if (cellarShare == null) {
-    cellarShare = initCellarShare(cellar, wallet);
+    cellarShare = initWalletCellarShare(cellar, wallet);
   }
 
   return cellarShare;
-}
-
-export function initCellarShareTransfer(
-  from: string,
-  to: string,
-  cellar: Cellar,
-  wallet: Wallet,
-  amount: BigInt,
-  block: BigInt,
-  txId: string,
-  timestamp: BigInt
-): CellarShareTransfer {
-  const id = timestamp
-    .toString()
-    .concat(ID_DELIMITER)
-    .concat(cellar.id)
-    .concat(ID_DELIMITER)
-    .concat(wallet.id);
-
-  const cellarShareTransfer = new CellarShareTransfer(id);
-  cellarShareTransfer.from = from;
-  cellarShareTransfer.to = to;
-  cellarShareTransfer.cellar = cellar.id;
-  cellarShareTransfer.wallet = wallet.id;
-  cellarShareTransfer.amount = amount;
-  cellarShareTransfer.txId = txId;
-  cellarShareTransfer.block = block.toI32();
-  cellarShareTransfer.timestamp = timestamp.toI32();
-
-  return cellarShareTransfer;
-}
-
-export function createDepositWithdrawEvent(
-  blockTimestamp: BigInt,
-  cellarAddress: string,
-  walletAddress: string,
-  amount: BigInt,
-  txId: string,
-  blockNumber: BigInt
-): DepositWithdrawEvent {
-  const id = blockTimestamp
-    .toString()
-    .concat(ID_DELIMITER)
-    .concat(walletAddress);
-  const event = new DepositWithdrawEvent(id);
-
-  event.cellar = cellarAddress;
-  event.wallet = walletAddress;
-  event.amount = amount;
-  event.txId = txId;
-  event.block = blockNumber.toI32();
-  event.timestamp = blockTimestamp.toI32();
-  event.save();
-
-  return event;
-}
-
-export function createAaveDepositWithdrawEvent(
-  blockTimestamp: BigInt,
-  cellarAddress: string,
-  amount: BigInt,
-  txId: string,
-  blockNumber: BigInt
-): AaveDepositWithdrawEvent {
-  // id: txId
-  const id = txId;
-  const event = new AaveDepositWithdrawEvent(id);
-
-  event.cellar = cellarAddress;
-  event.amount = amount;
-  event.txId = txId;
-  event.block = blockNumber.toI32();
-  event.timestamp = blockTimestamp.toI32();
-  event.save();
-
-  return event;
 }
 
 export function initToken(address: string): TokenERC20 {

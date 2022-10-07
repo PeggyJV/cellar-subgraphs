@@ -3,11 +3,22 @@ type Wallet @entity {
   currentDeposits: BigInt!
   totalDeposits: BigInt!
   totalWithdrawals: BigInt!
-  cellarShares: [CellarShare!]! @derivedFrom(field: "wallet")
-  cellarShareTransferEvents: [CellarShareTransfer!]!
-    @derivedFrom(field: "wallet")
+  cellarShares: [WalletCellarShare!]! @derivedFrom(field: "wallet")
   dayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
-  depositWithdrawEvents: [DepositWithdrawEvent!]! @derivedFrom(field: "wallet")
+}
+
+type WalletCellarData @entity {
+  id: ID! # wallet address - cellar address
+  currentDeposits: BigInt!
+  totalDeposits: BigInt!
+  totalWithdrawals: BigInt!
+}
+
+type WalletCellarShare @entity {
+  id: ID! # <cellar address>-<user wallet>
+  cellar: Cellar!
+  wallet: Wallet!  # Account that owns the cellar shares
+  balance: BigInt! # Balance of cellar shares in 'wallet'
 }
 
 type Cellar @entity {
@@ -31,26 +42,6 @@ type Cellar @entity {
   liquidityLimit: BigInt! # Max Deposits
 
   dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
-  aaveDepositWithdraws: [AaveDepositWithdrawEvent!]! @derivedFrom(field: "cellar")
-}
-
-type CellarShare @entity {
-  id: ID! # <cellar address>-<user wallet>
-  cellar: Cellar!
-  wallet: Wallet!  # Account that owns the cellar shares
-  balance: BigInt! # Balance of cellar shares in 'wallet'
-}
-
-type CellarShareTransfer @entity {
-  id: ID! # <timestamp>-<cellar address>-<user wallet>
-  from: String!
-  to: String!
-  cellar: Cellar!
-  wallet: Wallet!
-  amount: BigInt! # unsigned
-  txId: String! # transaction.hash.toHexString()
-  block: Int! # block.number.toI32()
-  timestamp: Int! # block.timestamp.toI32()
 }
 
 type CellarDayData @entity {
@@ -103,23 +94,4 @@ type TokenERC20 @entity {
   id: ID! # token contract address
   symbol: String!
   decimals: Int!
-}
-
-type DepositWithdrawEvent @entity {
-  id: ID! # timestamp + wallet address
-  cellar: Cellar! # to/from depending on whether it's add or remove
-  wallet: Wallet! # from/to
-  amount: BigInt! # signed
-  txId: String! # transaction.hash.toHexString()
-  block: Int! # block.number.toI32()
-  timestamp: Int! # block.timestamp.toI32()
-}
-
-type AaveDepositWithdrawEvent @entity {
-  id: ID! # transaction hash
-  cellar: Cellar! # to/from depending on whether it's add or remove
-  amount: BigInt! # signed
-  txId: String! # transaction.hash.toHexString()
-  block: Int! # block.number.toI32()
-  timestamp: Int! # block.timestamp.toI32()
 }
