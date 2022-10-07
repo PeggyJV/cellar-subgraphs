@@ -7,9 +7,9 @@ dataSources:
     name: Cellar
     network: mainnet
     source:
-      address: "0xc3761eb917cd790b30dad99f6cc5b4ff93c4f9ea" # placeholder
+      address: "0x7bad5df5e11151dc5ee1a648800057c5c934c0d5"
       abi: Cellar
-      startBlock: 14332315 # placeholder
+      startBlock: 15057867
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -26,48 +26,42 @@ dataSources:
         - AaveDepositWithdrawEvent
       abis:
         - name: Cellar
-          file: ../../node_modules/@sommelier/abis/src/AaveV2StablecoinCellar.json
+          file: ./abis/AaveV2StablecoinCellar.json
         - name: ERC20
-          file: ../../node_modules/@sommelier/abis/src/ERC20.json
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
-        - event: DepositToAave(indexed address,uint256)
-          handler: handleDepositToAave
-        - event: WithdrawFromAave(indexed address,uint256)
-          handler: handleWithdrawFromAave
-        - event: Deposit(indexed address,indexed address,indexed address,uint256,uint256)
+        - event: DepositIntoPosition(indexed address,uint256)
+          handler: handleDepositIntoPosition
+        - event: WithdrawFromPosition(indexed address,uint256)
+          handler: handleWithdrawFromPosition
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
           handler: handleDeposit
         - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleWithdraw
-        - event: LiquidityRestrictionRemoved()
-          handler: handleLiquidityRestrictionRemoved
+        - event: LiquidityLimitChanged(uint256,uint256)
+          handler: handleLiquidityLimitChanged
       file: ./src/cellar-mapping.ts
   - kind: ethereum
-    name: CellarStaking
+    name: USDC
     network: mainnet
     source:
-      address: "0xc3761eb917cd790b30dad99f6cc5b4ff93c4f9ea" # placeholder
-      abi: CellarStaking
-      startBlock: 14332315 # placeholder
+      address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" # USDC Token address
+      abi: ERC20
+      startBlock: 15057868
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - Wallet
-        - Cellar
-        - CellarShare
-        - CellarShareTransfer
         - CellarDayData
-        - WalletDayData
-        - TokenERC20
-        - DepositWithdrawEvent
-        - AaveDepositWithdrawEvent
       abis:
-        - name: CellarStaking
-          file: ../../node_modules/@sommelier/abis/src/CellarStaking.json
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
-        - event: Claim(indexed address,uint256,uint256)
-          handler: handleClaim
-      file: ./src/cellar-staking-mapping.ts
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/usdc-mapping.ts

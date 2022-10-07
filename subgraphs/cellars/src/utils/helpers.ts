@@ -4,6 +4,7 @@ import {
   DepositWithdrawEvent,
   Cellar,
   CellarDayData,
+  CellarHourData,
   CellarShare,
   CellarShareTransfer,
   AaveDepositWithdrawEvent,
@@ -16,21 +17,30 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 export const ID_DELIMITER = "-";
 export const DAY_SECONDS = 60 * 60 * 24;
+export const HOUR_SECONDS = 60 * 60;
 
 export function initCellar(contractAddress: Address): Cellar {
   const id = contractAddress.toHexString();
   const cellar = new Cellar(id);
 
-  cellar.name = "AaveStablecoinCellar";
-
+  // Fetch data from chain
   const contract = CellarContract.bind(contractAddress);
+  cellar.name = contract.name();
   cellar.asset = contract.asset().toHexString();
-  cellar.feePlatform = contract.PLATFORM_FEE();
-  cellar.feePerformance = contract.PERFORMANCE_FEE();
+  cellar.depositLimit = contract.depositLimit();
+  cellar.liquidityLimit = contract.liquidityLimit();
 
-  const token = loadTokenERC20(cellar.asset);
-  const decimals = TEN_BI.pow(token.decimals as u8); // USDC decimals = 6, assume asset starts as USDC
-  cellar.maxLiquidity = BigInt.fromI32(50000).times(decimals);
+  // Initialize
+  cellar.tvlActive = ZERO_BI;
+  cellar.tvlInactive = ZERO_BI;
+  cellar.tvlInvested = ZERO_BI;
+  cellar.tvlTotal = ZERO_BI;
+  cellar.currentDeposits = ZERO_BI;
+  cellar.addedLiquidityAllTime = ZERO_BI;
+  cellar.removedLiquidityAllTime = ZERO_BI;
+  cellar.numWalletsAllTime = 0;
+  cellar.numWalletsActive = 0;
+  cellar.sharesTotal = ZERO_BI;
 
   return cellar;
 }
@@ -46,34 +56,139 @@ export function loadCellar(contractAddress: Address): Cellar {
 }
 
 export function initCellarDayData(
-  cellar: Cellar,
+  cellarAddress: string,
   id: string,
-  date: number
+  date: number,
+  assetAddress: string
 ): CellarDayData {
-  const cellarDayData = new CellarDayData(id);
+  const entity = new CellarDayData(id);
 
-  cellarDayData.cellar = cellar.id;
-  cellarDayData.date = date as u32;
-  cellarDayData.addedLiquidity = ZERO_BI;
-  cellarDayData.removedLiquidity = ZERO_BI;
-  cellarDayData.numWallets = 0;
+  entity.date = date as u32;
+  entity.cellar = cellarAddress;
+  entity.asset = assetAddress;
+  entity.updatedAt = 0;
+  entity.addedLiquidity = ZERO_BI;
+  entity.removedLiquidity = ZERO_BI;
+  entity.numWallets = 0;
+  entity.tvlActive = ZERO_BI;
+  entity.tvlInactive = ZERO_BI;
+  entity.tvlInvested = ZERO_BI;
+  entity.tvlTotal = ZERO_BI;
+  entity.earnings = ZERO_BI;
+
+  return entity;
+}
+
+export function initCellarHourData(
+  cellarAddress: string,
+  id: string,
+  date: number,
+  assetAddress: string
+): CellarHourData {
+  const entity = new CellarHourData(id);
+
+  entity.date = date as u32;
+  entity.cellar = cellarAddress;
+  entity.asset = assetAddress;
+  entity.updatedAt = 0;
+  entity.addedLiquidity = ZERO_BI;
+  entity.removedLiquidity = ZERO_BI;
+  entity.numWallets = 0;
+  entity.tvlActive = ZERO_BI;
+  entity.tvlInactive = ZERO_BI;
+  entity.tvlInvested = ZERO_BI;
+  entity.tvlTotal = ZERO_BI;
+  entity.earnings = ZERO_BI;
+
+  return entity;
+}
+
+export function getDayId(
+  cellarAddress: string,
+  blockTimestamp: BigInt
+): string {
+  const date = (blockTimestamp.toI32() / DAY_SECONDS) * DAY_SECONDS;
+  const id = date.toString().concat(ID_DELIMITER).concat(cellarAddress);
+
+  return id;
+}
+
+export function loadCellarDayData(
+  cellarAddress: string,
+  blockTimestamp: BigInt,
+  assetAddress: string
+): CellarDayData {
+  const date = (blockTimestamp.toI32() / DAY_SECONDS) * DAY_SECONDS;
+  const id = `${cellarAddress}${ID_DELIMITER}${assetAddress}${ID_DELIMITER}${date.toString()}`;
+
+  let cellarDayData = CellarDayData.load(id);
+  if (cellarDayData == null) {
+    cellarDayData = initCellarDayData(cellarAddress, id, date, assetAddress);
+  }
 
   return cellarDayData;
 }
 
-export function loadCellarDayData(
-  cellar: Cellar,
-  blockTimestamp: BigInt
+export function loadPrevCellarDayData(
+  cellarAddress: string,
+  blockTimestamp: BigInt,
+  assetAddress: string
 ): CellarDayData {
   const date = (blockTimestamp.toI32() / DAY_SECONDS) * DAY_SECONDS;
-  const id = date.toString().concat(ID_DELIMITER).concat(cellar.id);
+  const prevDay = date - DAY_SECONDS;
+  const id = `${cellarAddress}${ID_DELIMITER}${assetAddress}${ID_DELIMITER}${prevDay.toString()}`;
 
   let cellarDayData = CellarDayData.load(id);
   if (cellarDayData == null) {
-    cellarDayData = initCellarDayData(cellar, id, date);
+    // if we are on the first snapshot after a rebalance, there will be no previous data so fake it
+    cellarDayData = initCellarDayData(
+      cellarAddress,
+      id,
+      blockTimestamp.toI32(),
+      assetAddress
+    );
   }
 
   return cellarDayData;
+}
+
+export function loadCellarHourData(
+  cellarAddress: string,
+  blockTimestamp: BigInt,
+  assetAddress: string
+): CellarHourData {
+  const date = (blockTimestamp.toI32() / HOUR_SECONDS) * HOUR_SECONDS;
+  const id = `${cellarAddress}${ID_DELIMITER}${assetAddress}${ID_DELIMITER}${date.toString()}`;
+
+  let cellarHourData = CellarHourData.load(id);
+  if (cellarHourData == null) {
+    cellarHourData = initCellarHourData(cellarAddress, id, date, assetAddress);
+  }
+
+  return cellarHourData;
+}
+
+export function loadPrevCellarHourData(
+  cellarAddress: string,
+  blockTimestamp: BigInt,
+  assetAddress: string
+): CellarHourData {
+  const date = (blockTimestamp.toI32() / HOUR_SECONDS) * HOUR_SECONDS;
+  const prevHour = date - HOUR_SECONDS;
+  const id = `${cellarAddress}${ID_DELIMITER}${assetAddress}${ID_DELIMITER}${prevHour.toString()}`;
+
+  let cellarHourData = CellarHourData.load(id);
+  if (cellarHourData == null) {
+    // if we are on the first snapshot after a rebalance, there will be no previous data so fake it
+    cellarHourData = initCellarHourData(
+      cellarAddress,
+      id,
+      blockTimestamp.toI32(),
+      assetAddress
+    );
+  }
+
+  return cellarHourData;
 }
 
 export function initWalletDayData(
@@ -81,14 +196,14 @@ export function initWalletDayData(
   id: string,
   date: number
 ): WalletDayData {
-  const walletDayData = new WalletDayData(id);
+  const entity = new WalletDayData(id);
 
-  walletDayData.wallet = wallet.id;
-  walletDayData.date = date as u32;
-  walletDayData.addedLiquidity = ZERO_BI;
-  walletDayData.removedLiquidity = ZERO_BI;
+  entity.date = date as u32;
+  entity.wallet = wallet.id;
+  entity.addedLiquidity = ZERO_BI;
+  entity.removedLiquidity = ZERO_BI;
 
-  return walletDayData;
+  return entity;
 }
 
 export function loadWalletDayData(
@@ -116,8 +231,8 @@ export function initCellarShare(cellar: Cellar, wallet: Wallet): CellarShare {
   const balanceInit = ZERO_BI;
 
   let cellarShare = new CellarShare(cellarShareID);
-  cellarShare.wallet = wallet.id;
   cellarShare.cellar = cellar.id;
+  cellarShare.wallet = wallet.id;
   cellarShare.balance = balanceInit;
 
   return cellarShare;
@@ -235,11 +350,37 @@ export function initToken(address: string): TokenERC20 {
   return token;
 }
 
-export function loadTokenERC20(address: string): TokenERC20 {
+export function loadOrCreateTokenERC20(address: string): TokenERC20 {
   let token = TokenERC20.load(address);
   if (token == null) {
     token = initToken(address);
+    token.save();
   }
 
   return token;
+}
+
+export function convertDecimals(
+  value: BigInt,
+  fromDecimals: BigInt,
+  toDecimals: BigInt
+): BigInt {
+  const delta = toDecimals.minus(fromDecimals);
+  if (delta.equals(ZERO_BI)) {
+    return value;
+  }
+
+  const multiplier = TEN_BI.pow(delta.toI32() as u8);
+
+  if (delta.gt(ZERO_BI)) {
+    return value.times(multiplier);
+  }
+
+  return value.div(multiplier);
+}
+
+// TODO configure
+const decimals = BigInt.fromI32(18);
+export function normalizeDecimals(value: BigInt, fromDecimals: BigInt): BigInt {
+  return convertDecimals(value, fromDecimals, decimals);
 }
