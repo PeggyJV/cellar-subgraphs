@@ -1,6 +1,7 @@
 import {
   Deposit,
   DepositIntoPosition,
+  DepositLimitChanged,
   Withdraw,
   WithdrawFromPosition,
   Transfer,
@@ -270,5 +271,14 @@ export function handleLiquidityLimitChanged(
   const cellar = loadCellar(cellarAddress);
 
   cellar.liquidityLimit = event.params.newLimit;
+  cellar.save();
+}
+
+export function handleDepositLimitChanged(event: DepositLimitChanged): void {
+  // cellar
+  const cellarAddress = event.address;
+  const cellar = loadCellar(cellarAddress);
+
+  cellar.depositLimit = event.params.newLimit;
   cellar.save();
 }
