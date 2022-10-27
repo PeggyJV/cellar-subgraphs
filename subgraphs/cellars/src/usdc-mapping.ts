@@ -1,8 +1,23 @@
 import { Cellar as CellarContract } from "../generated/Cellar/Cellar";
 import { Transfer } from "../generated/USDC/ERC20";
 import { Cellar } from "../generated/schema";
-import { CELLAR_AAVE_LATEST, ZERO_BI } from "./utils/constants";
 import {
+  snapshotDay as cgSnapshotDay,
+  snapshotHour as cgSnapshotHour,
+} from "./utils/cleargate";
+import {
+  CELLAR_AAVE_LATEST,
+  CELLAR_CLEARGATE_A,
+  CELLAR_CLEARGATE_B,
+  CELLAR_CLEARGATE_C,
+  CELLAR_CLEARGATE_D,
+  ZERO_BI,
+  ONE_BI,
+  ONE_SHARE,
+  ONE_BD,
+} from "./utils/constants";
+import {
+  convertDecimals,
   loadCellar,
   loadCellarDayData,
   loadPrevCellarDayData,
@@ -14,17 +29,26 @@ import {
 import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 
 const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
+const cleargateCellars = new Array<string>();
+cleargateCellars.push(CELLAR_CLEARGATE_A);
+cleargateCellars.push(CELLAR_CLEARGATE_B);
+cleargateCellars.push(CELLAR_CLEARGATE_C);
+cleargateCellars.push(CELLAR_CLEARGATE_D);
 
 // We are piggy backing off of USDCs transfer event to get more granularity
 // for Cellar TVL and aToken snapshots.
 export function handleTransfer(event: Transfer): void {
   const cellar = loadCellar(cellarLatest);
   const contract = CellarContract.bind(Address.fromString(cellar.id));
-
   snapshotDay(event, cellar, contract);
   snapshotHour(event, cellar, contract);
 
-  cellar.save();
+  // cleargate
+  for (let i = 0; i < cleargateCellars.length; i++) {
+    const address = cleargateCellars[i];
+    cgSnapshotDay(event, address);
+    cgSnapshotHour(event, address);
+  }
 }
 
 function snapshotDay(
@@ -37,29 +61,47 @@ function snapshotDay(
   }
   const cellarAsset = cellar.asset as string;
 
-  const dataEntity = loadCellarDayData(
+  const snapshot = loadCellarDayData(
     cellar.id,
     event.block.timestamp,
     cellarAsset
   );
 
   const timestamp = event.block.timestamp.toI32();
-  const secSinceUpdated = timestamp - dataEntity.updatedAt;
-  if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 1) {
+  const secSinceUpdated = timestamp - snapshot.updatedAt;
+  if (snapshot.updatedAt != 0 && secSinceUpdated < 60 * 1) {
     // Bail if we updated in the last minute
     return;
   }
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
+  const assetDecimals = BigInt.fromI32(asset.decimals);
 
-  dataEntity.tvlInvested = cellar.tvlInvested;
+  snapshot.tvlInvested = cellar.tvlInvested;
+
+  const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
+  if (convertShareResult.reverted) {
+    log.warning("Could not call cellar.convertToAssets: {}", [cellar.id]);
+  } else {
+    cellar.shareValue = convertShareResult.value;
+    snapshot.shareValue = convertShareResult.value;
+
+    const singleShare = convertDecimals(ONE_BI, ZERO_BI, assetDecimals);
+    const shareProfitRatio = cellar.shareValue
+      .minus(singleShare)
+      .toBigDecimal()
+      .div(singleShare.toBigDecimal());
+
+    cellar.shareProfitRatio = shareProfitRatio;
+    snapshot.shareProfitRatio = shareProfitRatio;
+  }
 
   const activeAssetsResult = contract.try_totalBalance();
   if (activeAssetsResult.reverted) {
     log.warning("Could not call cellar.activeAssets: {}", [cellar.id]);
 
-    dataEntity.tvlActive = ZERO_BI;
-    dataEntity.earnings = ZERO_BI;
+    snapshot.tvlActive = ZERO_BI;
+    snapshot.earnings = ZERO_BI;
   } else {
     const prevEntity = loadPrevCellarDayData(
       cellar.id,
@@ -72,13 +114,13 @@ function snapshotDay(
       BigInt.fromI32(asset.decimals)
     );
 
-    dataEntity.tvlActive = activeAssets;
-    const accumulated = activeAssets.minus(dataEntity.tvlInvested);
+    snapshot.tvlActive = activeAssets;
+    const accumulated = activeAssets.minus(snapshot.tvlInvested);
     const prevAccumulated = prevEntity.tvlActive.minus(prevEntity.tvlInvested);
-    dataEntity.earnings = accumulated.minus(prevAccumulated);
+    snapshot.earnings = accumulated.minus(prevAccumulated);
 
-    if (dataEntity.earnings < ZERO_BI) {
-      dataEntity.earnings = ZERO_BI;
+    if (snapshot.earnings < ZERO_BI) {
+      snapshot.earnings = ZERO_BI;
     }
   }
 
@@ -86,19 +128,19 @@ function snapshotDay(
   if (inactiveAssetsResult.reverted) {
     log.warning("Could not call cellar.inactiveAssets: {}", [cellar.id]);
 
-    dataEntity.tvlInactive = ZERO_BI;
+    snapshot.tvlInactive = ZERO_BI;
   } else {
     const inactiveAssets = normalizeDecimals(
       inactiveAssetsResult.value,
       BigInt.fromI32(asset.decimals)
     );
-    dataEntity.tvlInactive = inactiveAssets;
+    snapshot.tvlInactive = inactiveAssets;
   }
 
-  dataEntity.tvlTotal = dataEntity.tvlActive.plus(dataEntity.tvlInactive);
-  dataEntity.updatedAt = timestamp;
+  snapshot.tvlTotal = snapshot.tvlActive.plus(snapshot.tvlInactive);
+  snapshot.updatedAt = timestamp;
 
-  dataEntity.save();
+  snapshot.save();
 }
 
 function snapshotHour(
@@ -111,29 +153,47 @@ function snapshotHour(
   }
   const cellarAsset = cellar.asset as string;
 
-  const dataEntity = loadCellarHourData(
+  const snapshot = loadCellarHourData(
     cellar.id,
     event.block.timestamp,
     cellarAsset
   );
 
   const timestamp = event.block.timestamp.toI32();
-  const secSinceUpdated = timestamp - dataEntity.updatedAt;
-  if (dataEntity.updatedAt != 0 && secSinceUpdated < 60 * 1) {
+  const secSinceUpdated = timestamp - snapshot.updatedAt;
+  if (snapshot.updatedAt != 0 && secSinceUpdated < 60 * 1) {
     // Bail if we updated in the last minute
     return;
   }
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
+  const assetDecimals = BigInt.fromI32(asset.decimals);
 
-  dataEntity.tvlInvested = cellar.tvlInvested;
+  snapshot.tvlInvested = cellar.tvlInvested;
+
+  const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
+  if (convertShareResult.reverted) {
+    log.warning("Could not call cellar.converToAssets: {}", [cellar.id]);
+  } else {
+    cellar.shareValue = convertShareResult.value;
+    snapshot.shareValue = convertShareResult.value;
+
+    const singleShare = convertDecimals(ONE_BI, ZERO_BI, assetDecimals);
+    const shareProfitRatio = cellar.shareValue
+      .minus(singleShare)
+      .toBigDecimal()
+      .div(singleShare.toBigDecimal());
+
+    cellar.shareProfitRatio = shareProfitRatio;
+    snapshot.shareProfitRatio = shareProfitRatio;
+  }
 
   const activeAssetsResult = contract.try_totalBalance();
   if (activeAssetsResult.reverted) {
     log.warning("Could not call cellar.activeAssets: {}", [cellar.id]);
 
-    dataEntity.tvlActive = ZERO_BI;
-    dataEntity.earnings = ZERO_BI;
+    snapshot.tvlActive = ZERO_BI;
+    snapshot.earnings = ZERO_BI;
   } else {
     const prevEntity = loadPrevCellarHourData(
       cellar.id,
@@ -143,16 +203,16 @@ function snapshotHour(
 
     const activeAssets = normalizeDecimals(
       activeAssetsResult.value,
-      BigInt.fromI32(asset.decimals)
+      assetDecimals
     );
 
-    dataEntity.tvlActive = activeAssets;
-    const accumulated = activeAssets.minus(dataEntity.tvlInvested);
+    snapshot.tvlActive = activeAssets;
+    const accumulated = activeAssets.minus(snapshot.tvlInvested);
     const prevAccumulated = prevEntity.tvlActive.minus(prevEntity.tvlInvested);
-    dataEntity.earnings = accumulated.minus(prevAccumulated);
+    snapshot.earnings = accumulated.minus(prevAccumulated);
 
-    if (dataEntity.earnings < ZERO_BI) {
-      dataEntity.earnings = ZERO_BI;
+    if (snapshot.earnings < ZERO_BI) {
+      snapshot.earnings = ZERO_BI;
     }
   }
 
@@ -160,22 +220,23 @@ function snapshotHour(
   if (inactiveAssetsResult.reverted) {
     log.warning("Could not call cellar.inactiveAssets: {}", [cellar.id]);
 
-    dataEntity.tvlInactive = ZERO_BI;
+    snapshot.tvlInactive = ZERO_BI;
   } else {
     const inactiveAssets = normalizeDecimals(
       inactiveAssetsResult.value,
-      BigInt.fromI32(asset.decimals)
+      assetDecimals
     );
 
-    dataEntity.tvlInactive = inactiveAssets;
+    snapshot.tvlInactive = inactiveAssets;
   }
 
-  dataEntity.tvlTotal = dataEntity.tvlActive.plus(dataEntity.tvlInactive);
-  dataEntity.updatedAt = timestamp;
+  snapshot.tvlTotal = snapshot.tvlActive.plus(snapshot.tvlInactive);
+  snapshot.updatedAt = timestamp;
 
-  cellar.tvlActive = dataEntity.tvlActive;
-  cellar.tvlInactive = dataEntity.tvlInactive;
-  cellar.tvlTotal = dataEntity.tvlTotal;
+  cellar.tvlActive = snapshot.tvlActive;
+  cellar.tvlInactive = snapshot.tvlInactive;
+  cellar.tvlTotal = snapshot.tvlTotal;
 
-  dataEntity.save();
+  snapshot.save();
+  cellar.save();
 }
