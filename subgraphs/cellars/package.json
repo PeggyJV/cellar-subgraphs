@@ -11,6 +11,7 @@
     "deploy:local": "graph deploy --node http://localhost:8020 --ipfs http://localhost:5001 peggyjv/cellars",
     "deploy:hosted": "graph deploy --product hosted-service peggyjv/cellars",
     "deploy:hosted:test": "graph deploy --product hosted-service elkdao/cellarsnext",
-    "test": "graph test"
+    "test": "graph test",
+    "graph:version": "graph -v"
   }
 }

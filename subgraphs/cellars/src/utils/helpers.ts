@@ -9,7 +9,7 @@ import {
   WalletCellarShare,
   WalletDayData,
 } from "../../generated/schema";
-import { ZERO_BI, TEN_BI } from "./constants";
+import { ZERO_BD, ZERO_BI, TEN_BI } from "./constants";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 
 export const ID_DELIMITER = "-";
@@ -38,6 +38,8 @@ export function initCellar(contractAddress: Address): Cellar {
   cellar.numWalletsAllTime = 0;
   cellar.numWalletsActive = 0;
   cellar.sharesTotal = ZERO_BI;
+  cellar.shareValue = ZERO_BI;
+  cellar.shareProfitRatio = ZERO_BD;
 
   return cellar;
 }
@@ -72,6 +74,8 @@ export function initCellarDayData(
   entity.tvlInvested = ZERO_BI;
   entity.tvlTotal = ZERO_BI;
   entity.earnings = ZERO_BI;
+  entity.shareValue = ZERO_BI;
+  entity.shareProfitRatio = ZERO_BD;
 
   return entity;
 }
@@ -96,6 +100,8 @@ export function initCellarHourData(
   entity.tvlInvested = ZERO_BI;
   entity.tvlTotal = ZERO_BI;
   entity.earnings = ZERO_BI;
+  entity.shareValue = ZERO_BI;
+  entity.shareProfitRatio = ZERO_BD;
 
   return entity;
 }

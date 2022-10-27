@@ -1,7 +1,10 @@
 import { Cellar as CellarContract } from "../generated/Cellar/Cellar";
 import { Transfer } from "../generated/USDC/ERC20";
 import { Cellar } from "../generated/schema";
-import { snapshotDay as cgSnapshotDay } from "./utils/cleargate";
+import {
+  snapshotDay as cgSnapshotDay,
+  snapshotHour as cgSnapshotHour,
+} from "./utils/cleargate";
 import {
   CELLAR_AAVE_LATEST,
   CELLAR_CLEARGATE_A,
@@ -9,8 +12,12 @@ import {
   CELLAR_CLEARGATE_C,
   CELLAR_CLEARGATE_D,
   ZERO_BI,
+  ONE_BI,
+  ONE_SHARE,
+  ONE_BD,
 } from "./utils/constants";
 import {
+  convertDecimals,
   loadCellar,
   loadCellarDayData,
   loadPrevCellarDayData,
@@ -40,6 +47,7 @@ export function handleTransfer(event: Transfer): void {
   for (let i = 0; i < cleargateCellars.length; i++) {
     const address = cleargateCellars[i];
     cgSnapshotDay(event, address);
+    cgSnapshotHour(event, address);
   }
 }
 
@@ -67,8 +75,26 @@ function snapshotDay(
   }
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
+  const assetDecimals = BigInt.fromI32(asset.decimals);
 
   snapshot.tvlInvested = cellar.tvlInvested;
+
+  const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
+  if (convertShareResult.reverted) {
+    log.warning("Could not call cellar.convertToAssets: {}", [cellar.id]);
+  } else {
+    cellar.shareValue = convertShareResult.value;
+    snapshot.shareValue = convertShareResult.value;
+
+    const singleShare = convertDecimals(ONE_BI, ZERO_BI, assetDecimals);
+    const shareProfitRatio = cellar.shareValue
+      .minus(singleShare)
+      .toBigDecimal()
+      .div(singleShare.toBigDecimal());
+
+    cellar.shareProfitRatio = shareProfitRatio;
+    snapshot.shareProfitRatio = shareProfitRatio;
+  }
 
   const activeAssetsResult = contract.try_totalBalance();
   if (activeAssetsResult.reverted) {
@@ -141,8 +167,26 @@ function snapshotHour(
   }
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
+  const assetDecimals = BigInt.fromI32(asset.decimals);
 
   snapshot.tvlInvested = cellar.tvlInvested;
+
+  const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
+  if (convertShareResult.reverted) {
+    log.warning("Could not call cellar.converToAssets: {}", [cellar.id]);
+  } else {
+    cellar.shareValue = convertShareResult.value;
+    snapshot.shareValue = convertShareResult.value;
+
+    const singleShare = convertDecimals(ONE_BI, ZERO_BI, assetDecimals);
+    const shareProfitRatio = cellar.shareValue
+      .minus(singleShare)
+      .toBigDecimal()
+      .div(singleShare.toBigDecimal());
+
+    cellar.shareProfitRatio = shareProfitRatio;
+    snapshot.shareProfitRatio = shareProfitRatio;
+  }
 
   const activeAssetsResult = contract.try_totalBalance();
   if (activeAssetsResult.reverted) {
@@ -159,7 +203,7 @@ function snapshotHour(
 
     const activeAssets = normalizeDecimals(
       activeAssetsResult.value,
-      BigInt.fromI32(asset.decimals)
+      assetDecimals
     );
 
     snapshot.tvlActive = activeAssets;
@@ -180,7 +224,7 @@ function snapshotHour(
   } else {
     const inactiveAssets = normalizeDecimals(
       inactiveAssetsResult.value,
-      BigInt.fromI32(asset.decimals)
+      assetDecimals
     );
 
     snapshot.tvlInactive = inactiveAssets;
@@ -194,4 +238,5 @@ function snapshotHour(
   cellar.tvlTotal = snapshot.tvlTotal;
 
   snapshot.save();
+  cellar.save();
 }
