@@ -46,6 +46,9 @@ type Cellar @entity {
   depositLimit: BigInt!
   liquidityLimit: BigInt! # Max Deposits
 
+  positions: [String!]!
+  positionDistribution: [BigDecimal!]!
+
   dayDatas: [CellarDayData!]! @derivedFrom(field: "cellar")
 }
 
@@ -67,6 +70,7 @@ type CellarDayData @entity {
 
   shareValue: BigInt!
   shareProfitRatio: BigDecimal!
+  positionDistribution: [BigDecimal!]!
 
   earnings: BigInt!
 }
@@ -89,6 +93,7 @@ type CellarHourData @entity {
 
   shareValue: BigInt!
   shareProfitRatio: BigDecimal!
+  positionDistribution: [BigDecimal!]!
 
   earnings: BigInt!
 }

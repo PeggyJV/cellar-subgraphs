@@ -1,6 +1,15 @@
 import { ClearGateCellar } from "../../generated/CellarClearGateA/ClearGateCellar";
 import { Transfer, ERC20 } from "../../generated/USDC/ERC20";
-import { CELLAR_START, ONE_SHARE, ONE_BD, ONE_BI, ZERO_BI } from "./constants";
+import { Cellar } from "../../generated/schema";
+import { getUsdPrice } from "../prices/index";
+import {
+  CELLAR_START,
+  ONE_SHARE,
+  ONE_BD,
+  ONE_BI,
+  ZERO_BI,
+  TEN_BI,
+} from "./constants";
 import {
   convertDecimals,
   loadCellar,
@@ -10,7 +19,7 @@ import {
   loadOrCreateTokenERC20,
   normalizeDecimals,
 } from "./helpers";
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 export function snapshotDay(event: Transfer, cellarAddress: string): void {
   if (CELLAR_START.has(cellarAddress)) {
@@ -28,6 +37,11 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
 
   const contract = ClearGateCellar.bind(address);
 
+  // Get positions, save on cellar
+  const positions = getPositions(contract);
+  cellar.positions = positions;
+  cellar.positionDistribution = getPositionDistribution(positions, address);
+
   const cellarAsset = cellar.asset as string;
 
   const snapshot = loadCellarDayData(
@@ -35,6 +49,7 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
     event.block.timestamp,
     cellarAsset
   );
+  snapshot.positionDistribution = cellar.positionDistribution;
 
   const timestamp = event.block.timestamp.toI32();
   const secSinceUpdated = timestamp - snapshot.updatedAt;
@@ -130,6 +145,11 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
 
   const contract = ClearGateCellar.bind(address);
 
+  // Get positions, save on cellar
+  const positions = getPositions(contract);
+  cellar.positions = positions;
+  cellar.positionDistribution = getPositionDistribution(positions, address);
+
   const cellarAsset = cellar.asset as string;
 
   const snapshot = loadCellarHourData(
@@ -137,6 +157,7 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
     event.block.timestamp,
     cellarAsset
   );
+  snapshot.positionDistribution = cellar.positionDistribution;
 
   const timestamp = event.block.timestamp.toI32();
   const secSinceUpdated = timestamp - snapshot.updatedAt;
@@ -214,4 +235,60 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
 
   snapshot.updatedAt = timestamp;
   snapshot.save();
+}
+
+export function getPositions(contract: ClearGateCellar): string[] {
+  const result = contract.try_getPositions();
+  if (result.reverted) {
+    return new Array<string>();
+  }
+
+  return result.value.map(toHexString);
+}
+
+const empty = new Array<BigDecimal>();
+export function getPositionDistribution(
+  positions: string[],
+  cellarAddress: Address
+): BigDecimal[] {
+  const distribution = new Array<BigDecimal>();
+
+  for (let i = 0; i < positions.length; i++) {
+    // Fetch balance
+    const position = Address.fromString(positions[i]);
+    const erc20 = ERC20.bind(position);
+    const balanceResult = erc20.try_balanceOf(cellarAddress);
+
+    if (balanceResult.reverted) {
+      return empty;
+    }
+
+    // Calculate value
+    const tokenEntity = loadOrCreateTokenERC20(position.toHexString());
+    const balance = getAmountFromDecimals(
+      tokenEntity.decimals,
+      balanceResult.value
+    );
+    const amount = getUsdPrice(position, balance);
+    distribution.push(amount);
+  }
+
+  return distribution;
+}
+
+// TODO move to helpers
+export function getAmountFromDecimals(
+  decimals: number,
+  amount: BigInt
+): BigDecimal {
+  if (decimals < 1) {
+    return ZERO_BI.toBigDecimal();
+  }
+
+  const denom = TEN_BI.pow(decimals as u8).toBigDecimal();
+  return amount.toBigDecimal().div(denom);
+}
+
+function toHexString(address: Address, index: i32, array: Address[]): string {
+  return address.toHexString();
 }
