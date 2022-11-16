@@ -86,6 +86,16 @@ function snapshotDay(
     cellar.shareValue = convertShareResult.value;
     snapshot.shareValue = convertShareResult.value;
 
+    // Set low candle
+    if (snapshot.shareValue < snapshot.shareValueLow) {
+      snapshot.shareValueLow = snapshot.shareValue;
+    }
+
+    // Set high candle
+    if (snapshot.shareValue > snapshot.shareValueHigh) {
+      snapshot.shareValueHigh = snapshot.shareValue;
+    }
+
     const singleShare = convertDecimals(ONE_BI, ZERO_BI, assetDecimals);
     const shareProfitRatio = cellar.shareValue
       .minus(singleShare)
@@ -177,6 +187,16 @@ function snapshotHour(
   } else {
     cellar.shareValue = convertShareResult.value;
     snapshot.shareValue = convertShareResult.value;
+
+    // Set low candle
+    if (snapshot.shareValue < snapshot.shareValueLow) {
+      snapshot.shareValueLow = snapshot.shareValue;
+    }
+
+    // Set high candle
+    if (snapshot.shareValue > snapshot.shareValueHigh) {
+      snapshot.shareValueHigh = snapshot.shareValue;
+    }
 
     const singleShare = convertDecimals(ONE_BI, ZERO_BI, assetDecimals);
     const shareProfitRatio = cellar.shareValue
