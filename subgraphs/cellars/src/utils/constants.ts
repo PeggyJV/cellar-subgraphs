@@ -1,9 +1,11 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 
+export const NEGATIVE_ONE_BI = BigInt.fromI32(-1);
 export const ZERO_BI = BigInt.fromI32(0);
 export const ONE_BI = BigInt.fromI32(1);
 export const TEN_BI = BigInt.fromI32(10);
 
+export const NEGATIVE_ONE_BD = NEGATIVE_ONE_BI.toBigDecimal();
 export const ZERO_BD = ZERO_BI.toBigDecimal();
 export const ONE_BD = ONE_BI.toBigDecimal();
 

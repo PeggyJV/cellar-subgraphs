@@ -1,14 +1,13 @@
 import { ClearGateCellar } from "../../generated/CellarClearGateA/ClearGateCellar";
 import { Transfer, ERC20 } from "../../generated/USDC/ERC20";
-import { Cellar } from "../../generated/schema";
 import { getUsdPrice } from "../prices/index";
 import {
   CELLAR_START,
   ONE_SHARE,
-  ONE_BD,
   ONE_BI,
   ZERO_BI,
   TEN_BI,
+  NEGATIVE_ONE_BI,
 } from "./constants";
 import {
   convertDecimals,
@@ -69,6 +68,22 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
   } else {
     cellar.shareValue = convertShareResult.value;
     snapshot.shareValue = convertShareResult.value;
+
+    // Set low candle
+    if (
+      snapshot.shareValueLow.equals(NEGATIVE_ONE_BI) || // default value
+      snapshot.shareValue.lt(snapshot.shareValueLow)
+    ) {
+      snapshot.shareValueLow = snapshot.shareValue;
+    }
+
+    // Set high candle
+    if (
+      snapshot.shareValueHigh.equals(NEGATIVE_ONE_BI) || // default value
+      snapshot.shareValue.gt(snapshot.shareValueHigh)
+    ) {
+      snapshot.shareValueHigh = snapshot.shareValue;
+    }
   }
 
   const totalAssetsResult = contract.try_totalAssets();
@@ -177,6 +192,22 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
   } else {
     cellar.shareValue = convertShareResult.value;
     snapshot.shareValue = convertShareResult.value;
+
+    // Set low candle
+    if (
+      snapshot.shareValueLow.equals(NEGATIVE_ONE_BI) || // default value
+      snapshot.shareValue.lt(snapshot.shareValueLow)
+    ) {
+      snapshot.shareValueLow = snapshot.shareValue;
+    }
+
+    // Set high candle
+    if (
+      snapshot.shareValueHigh.equals(NEGATIVE_ONE_BI) || // default value
+      snapshot.shareValue.gt(snapshot.shareValueHigh)
+    ) {
+      snapshot.shareValueHigh = snapshot.shareValue;
+    }
   }
 
   const totalAssetsResult = contract.try_totalAssets();

@@ -11,6 +11,7 @@ import {
   ZERO_BI,
   ONE_BI,
   ONE_SHARE,
+  NEGATIVE_ONE_BI,
 } from "./utils/constants";
 import {
   convertDecimals,
@@ -78,12 +79,18 @@ function snapshotDay(
     snapshot.shareValue = convertShareResult.value;
 
     // Set low candle
-    if (snapshot.shareValue < snapshot.shareValueLow) {
+    if (
+      snapshot.shareValueLow.equals(NEGATIVE_ONE_BI) || // default value
+      snapshot.shareValue.lt(snapshot.shareValueLow)
+    ) {
       snapshot.shareValueLow = snapshot.shareValue;
     }
 
     // Set high candle
-    if (snapshot.shareValue > snapshot.shareValueHigh) {
+    if (
+      snapshot.shareValueHigh.equals(NEGATIVE_ONE_BI) || // default value
+      snapshot.shareValue.gt(snapshot.shareValueHigh)
+    ) {
       snapshot.shareValueHigh = snapshot.shareValue;
     }
 

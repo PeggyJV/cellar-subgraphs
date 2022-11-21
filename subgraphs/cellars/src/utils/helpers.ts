@@ -9,7 +9,7 @@ import {
   WalletCellarShare,
   WalletDayData,
 } from "../../generated/schema";
-import { ZERO_BD, ZERO_BI, TEN_BI } from "./constants";
+import { NEGATIVE_ONE_BI, ZERO_BD, ZERO_BI, TEN_BI } from "./constants";
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 export const ID_DELIMITER = "-";
@@ -78,8 +78,8 @@ export function initCellarDayData(
   entity.tvlTotal = ZERO_BI;
   entity.earnings = ZERO_BI;
   entity.shareValue = ZERO_BI;
-  entity.shareValueLow = ZERO_BI;
-  entity.shareValueHigh = ZERO_BI;
+  entity.shareValueLow = NEGATIVE_ONE_BI;
+  entity.shareValueHigh = NEGATIVE_ONE_BI;
   entity.shareProfitRatio = ZERO_BD;
   entity.positionDistribution = new Array<BigDecimal>();
 
@@ -107,8 +107,8 @@ export function initCellarHourData(
   entity.tvlTotal = ZERO_BI;
   entity.earnings = ZERO_BI;
   entity.shareValue = ZERO_BI;
-  entity.shareValueLow = ZERO_BI;
-  entity.shareValueHigh = ZERO_BI;
+  entity.shareValueLow = NEGATIVE_ONE_BI;
+  entity.shareValueHigh = NEGATIVE_ONE_BI;
   entity.shareProfitRatio = ZERO_BD;
   entity.positionDistribution = new Array<BigDecimal>();
 
