@@ -78,8 +78,6 @@ export function initCellarDayData(
   entity.tvlTotal = ZERO_BI;
   entity.earnings = ZERO_BI;
   entity.shareValue = ZERO_BI;
-  entity.shareValueLow = ZERO_BI;
-  entity.shareValueHigh = ZERO_BI;
   entity.shareProfitRatio = ZERO_BD;
   entity.positionDistribution = new Array<BigDecimal>();
 
@@ -107,8 +105,6 @@ export function initCellarHourData(
   entity.tvlTotal = ZERO_BI;
   entity.earnings = ZERO_BI;
   entity.shareValue = ZERO_BI;
-  entity.shareValueLow = ZERO_BI;
-  entity.shareValueHigh = ZERO_BI;
   entity.shareProfitRatio = ZERO_BD;
   entity.positionDistribution = new Array<BigDecimal>();
 
