@@ -7,14 +7,11 @@ import {
 } from "./utils/cleargate";
 import {
   CELLAR_AAVE_LATEST,
-  CELLAR_CLEARGATE_A,
-  CELLAR_CLEARGATE_B,
-  CELLAR_CLEARGATE_C,
-  CELLAR_CLEARGATE_D,
+  CLEARGATE_CELLARS,
   ZERO_BI,
   ONE_BI,
   ONE_SHARE,
-  ONE_BD,
+  NEGATIVE_ONE_BI,
 } from "./utils/constants";
 import {
   convertDecimals,
@@ -29,11 +26,6 @@ import {
 import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 
 const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
-const cleargateCellars = new Array<string>();
-cleargateCellars.push(CELLAR_CLEARGATE_A);
-cleargateCellars.push(CELLAR_CLEARGATE_B);
-cleargateCellars.push(CELLAR_CLEARGATE_C);
-cleargateCellars.push(CELLAR_CLEARGATE_D);
 
 // We are piggy backing off of USDCs transfer event to get more granularity
 // for Cellar TVL and aToken snapshots.
@@ -44,8 +36,8 @@ export function handleTransfer(event: Transfer): void {
   snapshotHour(event, cellar, contract);
 
   // cleargate
-  for (let i = 0; i < cleargateCellars.length; i++) {
-    const address = cleargateCellars[i];
+  for (let i = 0; i < CLEARGATE_CELLARS.length; i++) {
+    const address = CLEARGATE_CELLARS[i];
     cgSnapshotDay(event, address);
     cgSnapshotHour(event, address);
   }
@@ -85,6 +77,22 @@ function snapshotDay(
   } else {
     cellar.shareValue = convertShareResult.value;
     snapshot.shareValue = convertShareResult.value;
+
+    // Set low candle
+    if (
+      snapshot.shareValueLow.equals(NEGATIVE_ONE_BI) || // default value
+      snapshot.shareValue.lt(snapshot.shareValueLow)
+    ) {
+      snapshot.shareValueLow = snapshot.shareValue;
+    }
+
+    // Set high candle
+    if (
+      snapshot.shareValueHigh.equals(NEGATIVE_ONE_BI) || // default value
+      snapshot.shareValue.gt(snapshot.shareValueHigh)
+    ) {
+      snapshot.shareValueHigh = snapshot.shareValue;
+    }
 
     const singleShare = convertDecimals(ONE_BI, ZERO_BI, assetDecimals);
     const shareProfitRatio = cellar.shareValue
@@ -177,6 +185,16 @@ function snapshotHour(
   } else {
     cellar.shareValue = convertShareResult.value;
     snapshot.shareValue = convertShareResult.value;
+
+    // Set low candle
+    if (snapshot.shareValue < snapshot.shareValueLow) {
+      snapshot.shareValueLow = snapshot.shareValue;
+    }
+
+    // Set high candle
+    if (snapshot.shareValue > snapshot.shareValueHigh) {
+      snapshot.shareValueHigh = snapshot.shareValue;
+    }
 
     const singleShare = convertDecimals(ONE_BI, ZERO_BI, assetDecimals);
     const shareProfitRatio = cellar.shareValue
