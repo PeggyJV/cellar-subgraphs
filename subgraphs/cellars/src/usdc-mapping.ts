@@ -7,7 +7,7 @@ import {
 } from "./utils/cleargate";
 import {
   CELLAR_AAVE_LATEST,
-  CLEARGATE_CELLARS,
+  V1PT5_CELLARS,
   ZERO_BI,
   ONE_BI,
   ONE_SHARE,
@@ -36,8 +36,8 @@ export function handleTransfer(event: Transfer): void {
   snapshotHour(event, cellar, contract);
 
   // cleargate
-  for (let i = 0; i < CLEARGATE_CELLARS.length; i++) {
-    const address = CLEARGATE_CELLARS[i];
+  for (let i = 0; i < V1PT5_CELLARS.length; i++) {
+    const address = V1PT5_CELLARS[i];
     cgSnapshotDay(event, address);
     cgSnapshotHour(event, address);
   }
