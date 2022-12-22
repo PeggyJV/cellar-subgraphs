@@ -1,10 +1,10 @@
 specVersion: 0.0.4
 description: Subgraph that tracks Cellars on the Sommelier network
-# features:
-#   - grafting
-# graft:
-#   base: QmSNbv4onGNPngm2xpY9h7AvNsjaXpWCcERozBjbHnHbUC
-#   block: 15727184
+features:
+  - grafting
+graft:
+  base: Qmcjm6mQ6cgWkWXVnpPBX1hJ8sYSxSEEyD7R8dt7yCRbe8
+  block: 16242434
 schema:
   file: ./schema.graphql
 dataSources:
@@ -245,6 +245,82 @@ dataSources:
       address: "0x3f07a84ecdf494310d397d24c1c78b041d2fa622"
       abi: ClearGateCellar
       startBlock: 15991609
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+      abis:
+        - name: ClearGateCellar
+          file: ./abis/ClearGateCellar.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: LiquidityLimitChanged(uint256,uint256)
+          handler: handleLiquidityLimitChanged
+        - event: DepositLimitChanged(uint256,uint256)
+          handler: handleDepositLimitChanged
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
+    name: CellarSteadyUni
+    network: mainnet
+    source:
+      address: "0x6f069f711281618467dae7873541ecc082761b33"
+      abi: ClearGateCellar
+      startBlock: 16242434
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+      abis:
+        - name: ClearGateCellar
+          file: ./abis/ClearGateCellar.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: LiquidityLimitChanged(uint256,uint256)
+          handler: handleLiquidityLimitChanged
+        - event: DepositLimitChanged(uint256,uint256)
+          handler: handleDepositLimitChanged
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
+    name: CellarSteadyMatic
+    network: mainnet
+    source:
+      address: "0x05641a27c82799aaf22b436f20a3110410f29652"
+      abi: ClearGateCellar
+      startBlock: 16242434
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
