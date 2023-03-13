@@ -24,8 +24,21 @@ export function initCellar(contractAddress: Address): Cellar {
   const contract = CellarContract.bind(contractAddress);
   cellar.name = contract.name();
   cellar.asset = contract.asset().toHexString();
-  cellar.depositLimit = contract.depositLimit();
-  cellar.liquidityLimit = contract.liquidityLimit();
+
+  // Limits
+  const depositLimit = contract.try_depositLimit();
+  if (depositLimit.reverted) {
+    cellar.depositLimit = BigInt.zero();
+  } else {
+    cellar.depositLimit = depositLimit.value;
+  }
+
+  const liquidityLimit = contract.try_liquidityLimit();
+  if (liquidityLimit.reverted) {
+    cellar.liquidityLimit = BigInt.zero();
+  } else {
+    cellar.liquidityLimit = liquidityLimit.value;
+  }
 
   // Initialize
   cellar.tvlActive = ZERO_BI;

@@ -8,6 +8,7 @@ import {
 import {
   CELLAR_AAVE_LATEST,
   V1PT5_CELLARS,
+  V2_CELLARS,
   ZERO_BI,
   ONE_BI,
   ONE_SHARE,
@@ -23,6 +24,10 @@ import {
   loadOrCreateTokenERC20,
   normalizeDecimals,
 } from "./utils/helpers";
+import {
+  snapshotDay as v2SnapshotDay,
+  snapshotHour as v2SnapshotHour,
+} from "./utils/v2";
 import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 
 const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
@@ -30,16 +35,24 @@ const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
 // We are piggy backing off of USDCs transfer event to get more granularity
 // for Cellar TVL and aToken snapshots.
 export function handleTransfer(event: Transfer): void {
+  // Aave Cellar
   const cellar = loadCellar(cellarLatest);
   const contract = CellarContract.bind(Address.fromString(cellar.id));
   snapshotDay(event, cellar, contract);
   snapshotHour(event, cellar, contract);
 
-  // cleargate
+  // v1.5 Cellars
   for (let i = 0; i < V1PT5_CELLARS.length; i++) {
     const address = V1PT5_CELLARS[i];
     cgSnapshotDay(event, address);
     cgSnapshotHour(event, address);
+  }
+
+  // v2 Cellars
+  for (let i = 0; i < V2_CELLARS.length; i++) {
+    const address = V2_CELLARS[i];
+    v2SnapshotDay(event, address);
+    v2SnapshotHour(event, address);
   }
 }
 

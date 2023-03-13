@@ -35,6 +35,8 @@ export const STEADY_UNI =
   "0x6f069f711281618467dae7873541ecc082761b33".toLowerCase();
 export const STEADY_MATIC =
   "0x05641a27c82799aaf22b436f20a3110410f29652".toLowerCase();
+export const REAL_YIELD_USD =
+  "0x97e6e0a40a3d02f12d1cec30ebfbae04e37c119e".toLowerCase();
 
 export const CELLAR_START = new Map<string, BigInt>();
 CELLAR_START.set(CELLAR_CLEARGATE_A, BigInt.fromI32(15733768));
@@ -45,6 +47,7 @@ CELLAR_START.set(STEADY_BTC, BigInt.fromI32(15991609));
 CELLAR_START.set(STEADY_ETH, BigInt.fromI32(15991609));
 CELLAR_START.set(STEADY_UNI, BigInt.fromI32(16242434));
 CELLAR_START.set(STEADY_MATIC, BigInt.fromI32(16242434));
+CELLAR_START.set(REAL_YIELD_USD, BigInt.fromI32(16431804));
 
 export const V1PT5_CELLARS = new Array<string>();
 // ETH-BTC
@@ -60,3 +63,6 @@ V1PT5_CELLARS.push(STEADY_BTC);
 V1PT5_CELLARS.push(STEADY_ETH);
 V1PT5_CELLARS.push(STEADY_UNI);
 V1PT5_CELLARS.push(STEADY_MATIC);
+
+export const V2_CELLARS = new Array<string>();
+V2_CELLARS.push(REAL_YIELD_USD);
