@@ -269,86 +269,86 @@ const k = m.keys();
 const v = m.values();
 
 // Returns Map of postition address: adaptor address
-export function getPositions(
-  contract: CellarV2
-): Map<string, CellarV2__getPositionDataResult> {
-  const result = contract.try_getCreditPositions();
-  if (result.reverted) {
-    return new Map<string, CellarV2__getPositionDataResult>();
-  }
+// export function getPositions(
+//   contract: CellarV2
+// ): Map<string, CellarV2__getPositionDataResult> {
+//   const result = contract.try_getCreditPositions();
+//   if (result.reverted) {
+//     return new Map<string, CellarV2__getPositionDataResult>();
+//   }
+//
+//   const addresses = new Map<string, CellarV2__getPositionDataResult>();
+//
+//   const positionIds = result.value;
+//   for (let i = 0; i < positionIds.length; i++) {
+//     const id = positionIds[i];
+//     const data = contract.try_getPositionData(id);
+//     if (data.reverted) {
+//       log.warning("Could not get position data: {}", [id.toString()]);
+//       continue;
+//     }
+//
+//     const adaptorData = data.value.getAdaptorData();
+//     const addrs = adaptorDataToAddresses(adaptorData);
+//
+//     for (let j = 0; j < addrs.length; j++) {
+//       const position = addrs[j].toHexString();
+//       addresses.set(position, data.value);
+//     }
+//   }
+//
+//   return addresses;
+// }
 
-  const addresses = new Map<string, CellarV2__getPositionDataResult>();
-
-  const positionIds = result.value;
-  for (let i = 0; i < positionIds.length; i++) {
-    const id = positionIds[i];
-    const data = contract.try_getPositionData(id);
-    if (data.reverted) {
-      log.warning("Could not get position data: {}", [id.toString()]);
-      continue;
-    }
-
-    const adaptorData = data.value.getAdaptorData();
-    const addrs = adaptorDataToAddresses(adaptorData);
-
-    for (let j = 0; j < addrs.length; j++) {
-      const position = addrs[j].toHexString();
-      addresses.set(position, data.value);
-    }
-  }
-
-  return addresses;
-}
-
-export function getPositionDistribution(
-  positionDatas: Map<string, CellarV2__getPositionDataResult>,
-  cellarAddress: Address
-): BigDecimal[] {
-  const distribution = new Array<BigDecimal>();
-  const positions = positionDatas.keys();
-
-  for (let i = 0; i < positions.length; i++) {
-    // Fetch balance
-    const positionAddress = positions[i];
-    const position = Address.fromString(positionAddress);
-    const erc20 = ERC20.bind(position);
-    const balanceResult = erc20.try_balanceOf(cellarAddress);
-
-    if (balanceResult.reverted) {
-      log.warning("Could not get balance of ERC20: {}", [positions[i]]);
-      distribution.push(BigDecimal.zero());
-      continue;
-    }
-
-    // Fetch underlying asset
-    const positionData = positionDatas.get(positionAddress);
-    const adaptor = positionData.getAdaptor();
-    const adaptorContract = V2Adaptor.bind(adaptor);
-    const adaptorData = positionData.getAdaptorData();
-    const assetOfResult = adaptorContract.try_assetOf(adaptorData);
-    if (assetOfResult.reverted) {
-      log.warning("Could not call assetOf for adaptor {} with asset {}", [
-        adaptor.toHexString(),
-        positionAddress,
-      ]);
-    }
-
-    // Calculate value
-    // For v2 cellars get the balanceOf(position) * usdValue(underlying)
-    const underlying = assetOfResult.value;
-    const tokenEntity = loadOrCreateTokenERC20(positionAddress);
-    const balance = getAmountFromDecimals(
-      tokenEntity.decimals,
-      balanceResult.value
-    );
-
-    // get value of underlying
-    const amount = getUsdPrice(underlying, balance);
-    distribution.push(amount);
-  }
-
-  return distribution;
-}
+// export function getPositionDistribution(
+//   positionDatas: Map<string, CellarV2__getPositionDataResult>,
+//   cellarAddress: Address
+// ): BigDecimal[] {
+//   const distribution = new Array<BigDecimal>();
+//   const positions = positionDatas.keys();
+//
+//   for (let i = 0; i < positions.length; i++) {
+//     // Fetch balance
+//     const positionAddress = positions[i];
+//     const position = Address.fromString(positionAddress);
+//     const erc20 = ERC20.bind(position);
+//     const balanceResult = erc20.try_balanceOf(cellarAddress);
+//
+//     if (balanceResult.reverted) {
+//       log.warning("Could not get balance of ERC20: {}", [positions[i]]);
+//       distribution.push(BigDecimal.zero());
+//       continue;
+//     }
+//
+//     // Fetch underlying asset
+//     const positionData = positionDatas.get(positionAddress);
+//     const adaptor = positionData.getAdaptor();
+//     const adaptorContract = V2Adaptor.bind(adaptor);
+//     const adaptorData = positionData.getAdaptorData();
+//     const assetOfResult = adaptorContract.try_assetOf(adaptorData);
+//     if (assetOfResult.reverted) {
+//       log.warning("Could not call assetOf for adaptor {} with asset {}", [
+//         adaptor.toHexString(),
+//         positionAddress,
+//       ]);
+//     }
+//
+//     // Calculate value
+//     // For v2 cellars get the balanceOf(position) * usdValue(underlying)
+//     const underlying = assetOfResult.value;
+//     const tokenEntity = loadOrCreateTokenERC20(positionAddress);
+//     const balance = getAmountFromDecimals(
+//       tokenEntity.decimals,
+//       balanceResult.value
+//     );
+//
+//     // get value of underlying
+//     const amount = getUsdPrice(underlying, balance);
+//     distribution.push(amount);
+//   }
+//
+//   return distribution;
+// }
 
 export function adaptorDataToAddresses(data: Bytes): Address[] {
   const str = data.toHexString();

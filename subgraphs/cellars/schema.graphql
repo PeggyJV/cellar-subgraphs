@@ -4,6 +4,15 @@ type Platform @entity {
   latestSnapshotUpdatedAt: Int!
 }
 
+# Always in USD for now
+type TokenPrice @entity {
+  id: ID! # <tokenAddress>-<blockNumber>
+  address: String!
+  block: Int!
+  price: BigDecimal!
+  decimals: BigDecimal!
+}
+
 type Wallet @entity {
   id: ID! # wallet address
   currentDeposits: BigInt!

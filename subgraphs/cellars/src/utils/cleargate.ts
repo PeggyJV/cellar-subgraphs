@@ -45,7 +45,8 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
 
   cellar.positionDistribution = getPositionDistribution(
     cellar.positions,
-    address
+    address,
+    event.block.number
   );
 
   const cellarAsset = cellar.asset as string;
@@ -267,7 +268,8 @@ export function getPositions(contract: ClearGateCellar): string[] {
 const empty = new Array<BigDecimal>();
 export function getPositionDistribution(
   positions: string[],
-  cellarAddress: Address
+  cellarAddress: Address,
+  block: BigInt
 ): BigDecimal[] {
   const distribution = new Array<BigDecimal>();
 
@@ -287,7 +289,7 @@ export function getPositionDistribution(
       tokenEntity.decimals,
       balanceResult.value
     );
-    const amount = getUsdPrice(position, balance);
+    const amount = getUsdPrice(position, balance, block);
     distribution.push(amount);
   }
 
