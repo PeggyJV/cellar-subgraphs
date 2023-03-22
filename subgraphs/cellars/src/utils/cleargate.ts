@@ -36,10 +36,17 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
 
   const contract = ClearGateCellar.bind(address);
 
-  // Get positions, save on cellar
-  const positions = getPositions(contract);
-  cellar.positions = positions;
-  cellar.positionDistribution = getPositionDistribution(positions, address);
+  // Initialize this value if not set
+  // updates will be captures by the PositionAdded and Removed events
+  if (cellar.positions.length === 0) {
+    const positions = getPositions(contract);
+    cellar.positions = positions;
+  }
+
+  cellar.positionDistribution = getPositionDistribution(
+    cellar.positions,
+    address
+  );
 
   const cellarAsset = cellar.asset as string;
 
@@ -49,13 +56,6 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
     cellarAsset
   );
   snapshot.positionDistribution = cellar.positionDistribution;
-
-  const timestamp = event.block.timestamp.toI32();
-  const secSinceUpdated = timestamp - snapshot.updatedAt;
-  if (snapshot.updatedAt != 0 && secSinceUpdated < 60 * 1) {
-    // Bail if we updated in the last minute
-    return;
-  }
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
 
@@ -140,7 +140,7 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
       .minus(snapshot.addedLiquidity);
   }
 
-  snapshot.updatedAt = timestamp;
+  snapshot.updatedAt = event.block.timestamp.toI32();
   snapshot.save();
 }
 
@@ -159,12 +159,6 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
   }
 
   const contract = ClearGateCellar.bind(address);
-
-  // Get positions, save on cellar
-  const positions = getPositions(contract);
-  cellar.positions = positions;
-  cellar.positionDistribution = getPositionDistribution(positions, address);
-
   const cellarAsset = cellar.asset as string;
 
   const snapshot = loadCellarHourData(
@@ -173,13 +167,6 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
     cellarAsset
   );
   snapshot.positionDistribution = cellar.positionDistribution;
-
-  const timestamp = event.block.timestamp.toI32();
-  const secSinceUpdated = timestamp - snapshot.updatedAt;
-  if (snapshot.updatedAt != 0 && secSinceUpdated < 60 * 1) {
-    // Bail if we updated in the last minute
-    return;
-  }
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
 
@@ -264,7 +251,7 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
       .minus(snapshot.addedLiquidity);
   }
 
-  snapshot.updatedAt = timestamp;
+  snapshot.updatedAt = event.block.timestamp.toI32();
   snapshot.save();
 }
 

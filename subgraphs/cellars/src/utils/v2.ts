@@ -60,13 +60,6 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
   );
   snapshot.positionDistribution = cellar.positionDistribution;
 
-  const timestamp = event.block.timestamp.toI32();
-  const secSinceUpdated = timestamp - snapshot.updatedAt;
-  if (snapshot.updatedAt != 0 && secSinceUpdated < 60 * 1) {
-    // Bail if we updated in the last minute
-    return;
-  }
-
   const asset = loadOrCreateTokenERC20(cellarAsset);
 
   // TODO
@@ -150,7 +143,7 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
     }
   }
 
-  snapshot.updatedAt = timestamp;
+  snapshot.updatedAt = event.block.timestamp.toI32();
   snapshot.save();
 }
 
@@ -184,13 +177,6 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
   );
   snapshot.positionDistribution = cellar.positionDistribution;
 
-  const timestamp = event.block.timestamp.toI32();
-  const secSinceUpdated = timestamp - snapshot.updatedAt;
-  if (snapshot.updatedAt != 0 && secSinceUpdated < 60 * 1) {
-    // Bail if we updated in the last minute
-    return;
-  }
-
   const asset = loadOrCreateTokenERC20(cellarAsset);
 
   // TODO
@@ -274,7 +260,7 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
     }
   }
 
-  snapshot.updatedAt = timestamp;
+  snapshot.updatedAt = event.block.timestamp.toI32();
   snapshot.save();
 }
 

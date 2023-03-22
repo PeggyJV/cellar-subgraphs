@@ -1,5 +1,27 @@
-import { Cellar, Wallet, WalletCellarData } from "../../generated/schema";
+import {
+  Cellar,
+  Platform,
+  Wallet,
+  WalletCellarData,
+} from "../../generated/schema";
 import { ZERO_BI } from "./constants";
+
+export const PLATFORM_ID = "platform";
+export function loadPlatform(): Platform {
+  let entity = Platform.load(PLATFORM_ID);
+  if (entity == null) {
+    entity = new Platform(PLATFORM_ID);
+    entity.latestSnapshotUpdatedAt = 0;
+  }
+
+  return entity;
+}
+
+export function setPlatformSnapshotUpdatedAt(updatedAt: i32): void {
+  const platform = loadPlatform();
+  platform.latestSnapshotUpdatedAt = updatedAt;
+  platform.save();
+}
 
 export function initWallet(walletAddress: string): Wallet {
   const entity = new Wallet(walletAddress);

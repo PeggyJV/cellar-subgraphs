@@ -1,5 +1,7 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 
+export const SNAPSHOT_INTERVAL_SECS = 60 * 5; // 5 minutes
+
 export const NEGATIVE_ONE_BI = BigInt.fromI32(-1);
 export const ZERO_BI = BigInt.fromI32(0);
 export const ONE_BI = BigInt.fromI32(1);

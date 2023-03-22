@@ -13,7 +13,9 @@ import {
   ONE_BI,
   ONE_SHARE,
   NEGATIVE_ONE_BI,
+  SNAPSHOT_INTERVAL_SECS,
 } from "./utils/constants";
+import { loadPlatform, setPlatformSnapshotUpdatedAt } from "./utils/entities";
 import {
   convertDecimals,
   loadCellar,
@@ -35,15 +37,25 @@ const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
 // We are piggy backing off of USDCs transfer event to get more granularity
 // for Cellar TVL and aToken snapshots.
 export function handleTransfer(event: Transfer): void {
+  const timestamp = event.block.timestamp.toI32();
+  const platform = loadPlatform();
+  const secSinceUpdated = timestamp - platform.latestSnapshotUpdatedAt;
+  if (secSinceUpdated < SNAPSHOT_INTERVAL_SECS) {
+    // Bail if we updated in the last 5 minutes
+    return;
+  }
+
   // Aave Cellar
   const cellar = loadCellar(cellarLatest);
-  const contract = CellarContract.bind(Address.fromString(cellar.id));
+  const contract = CellarContract.bind(cellarLatest);
   snapshotDay(event, cellar, contract);
   snapshotHour(event, cellar, contract);
 
   // v1.5 Cellars
   for (let i = 0; i < V1PT5_CELLARS.length; i++) {
     const address = V1PT5_CELLARS[i];
+    // Snapshot day must be called first since it initializes cellar.positions
+    // and calculates the position distribution
     cgSnapshotDay(event, address);
     cgSnapshotHour(event, address);
   }
@@ -54,6 +66,8 @@ export function handleTransfer(event: Transfer): void {
     v2SnapshotDay(event, address);
     v2SnapshotHour(event, address);
   }
+
+  setPlatformSnapshotUpdatedAt(event.block.timestamp.toI32());
 }
 
 function snapshotDay(
@@ -71,13 +85,6 @@ function snapshotDay(
     event.block.timestamp,
     cellarAsset
   );
-
-  const timestamp = event.block.timestamp.toI32();
-  const secSinceUpdated = timestamp - snapshot.updatedAt;
-  if (snapshot.updatedAt != 0 && secSinceUpdated < 60 * 1) {
-    // Bail if we updated in the last minute
-    return;
-  }
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
   const assetDecimals = BigInt.fromI32(asset.decimals);
@@ -159,7 +166,7 @@ function snapshotDay(
   }
 
   snapshot.tvlTotal = snapshot.tvlActive.plus(snapshot.tvlInactive);
-  snapshot.updatedAt = timestamp;
+  snapshot.updatedAt = event.block.timestamp.toI32();
 
   snapshot.save();
 }
@@ -179,13 +186,6 @@ function snapshotHour(
     event.block.timestamp,
     cellarAsset
   );
-
-  const timestamp = event.block.timestamp.toI32();
-  const secSinceUpdated = timestamp - snapshot.updatedAt;
-  if (snapshot.updatedAt != 0 && secSinceUpdated < 60 * 1) {
-    // Bail if we updated in the last minute
-    return;
-  }
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
   const assetDecimals = BigInt.fromI32(asset.decimals);
@@ -262,7 +262,7 @@ function snapshotHour(
   }
 
   snapshot.tvlTotal = snapshot.tvlActive.plus(snapshot.tvlInactive);
-  snapshot.updatedAt = timestamp;
+  snapshot.updatedAt = event.block.timestamp.toI32();
 
   cellar.tvlActive = snapshot.tvlActive;
   cellar.tvlInactive = snapshot.tvlInactive;

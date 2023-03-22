@@ -1,3 +1,9 @@
+type Platform @entity {
+  id: ID! # platform
+
+  latestSnapshotUpdatedAt: Int!
+}
+
 type Wallet @entity {
   id: ID! # wallet address
   currentDeposits: BigInt!

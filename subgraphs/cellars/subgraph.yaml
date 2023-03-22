@@ -3,8 +3,8 @@ description: Subgraph that tracks Cellars on the Sommelier network
 features:
   - grafting
 graft:
-  base: QmYXvzxxT3fAcgWhpmaN3QWsP1o2jiFtivhFGcHRH96VKb
-  block: 16431803
+  base: QmbGAvBwjqYVa6EWrkKKswUdweeUfAxzPtabiCQsbnHMNh
+  block: 16431800
 schema:
   file: ./schema.graphql
 dataSources:
@@ -372,6 +372,8 @@ dataSources:
         - CellarHourData
         - TokenERC20
       abis:
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
         - name: CellarV2
           file: ./abis/cellar-v2.json
         - name: ERC20
