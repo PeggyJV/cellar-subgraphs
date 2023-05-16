@@ -67,7 +67,7 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
 
   const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
   if (convertShareResult.reverted) {
-    log.warning("Could not call cellar.converToAssets: {}", [cellar.id]);
+    log.warning("Could not call cellar.convertToAssets: {}", [cellar.id]);
   } else {
     cellar.shareValue = convertShareResult.value;
     snapshot.shareValue = convertShareResult.value;
@@ -370,25 +370,15 @@ export function getHoldingPosition(contract: CellarV2): Address {
   let value = Address.zero();
   const holdingPositionResult = contract.try_holdingPosition();
   if (!holdingPositionResult.reverted) {
-    const holdingPositionIdx = holdingPositionResult.value;
-    const creditPositionResult =
-      contract.try_creditPositions(holdingPositionIdx);
-    if (!creditPositionResult.reverted) {
-      const holdingPositionId = creditPositionResult.value;
-      const positionDataResult =
-        contract.try_getPositionData(holdingPositionId);
+    const holdingPositionId = holdingPositionResult.value;
+    const positionDataResult = contract.try_getPositionData(holdingPositionId);
 
-      if (!positionDataResult.reverted) {
-        const data = positionDataResult.value.getAdaptorData();
-        value = adaptorDataToAddresses(data)[0];
-      } else {
-        log.warning("Could not call getPositionData with id: {}", [
-          holdingPositionId.toString(),
-        ]);
-      }
+    if (!positionDataResult.reverted) {
+      const data = positionDataResult.value.getAdaptorData();
+      value = adaptorDataToAddresses(data)[0];
     } else {
-      log.warning("index out of bounds in creditPositions array: {}", [
-        holdingPositionIdx.toString(),
+      log.warning("Could not call getPositionData with id: {}", [
+        holdingPositionId.toString(),
       ]);
     }
   } else {
