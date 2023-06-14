@@ -2,10 +2,6 @@ import { Cellar as CellarContract } from "../generated/Cellar/Cellar";
 import { Transfer } from "../generated/USDC/ERC20";
 import { Cellar } from "../generated/schema";
 import {
-  snapshotDay as cgSnapshotDay,
-  snapshotHour as cgSnapshotHour,
-} from "./utils/cleargate";
-import {
   CELLAR_AAVE_LATEST,
   V1PT5_CELLARS,
   V2_CELLARS,
@@ -27,17 +23,19 @@ import {
   normalizeDecimals,
 } from "./utils/helpers";
 import {
+  snapshotDay as v1_5SnapshotDay,
+  snapshotHour as v1_5SnapshotHour,
+} from "./utils/v1-5";
+import {
   snapshotDay as v2SnapshotDay,
   snapshotHour as v2SnapshotHour,
 } from "./utils/v2";
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
 const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
 
-// We are piggy backing off of USDCs transfer event to get more granularity
-// for Cellar TVL and aToken snapshots.
-export function handleTransfer(event: Transfer): void {
-  const timestamp = event.block.timestamp.toI32();
+export function handleBlock(block: ethereum.Block): void {
+  const timestamp = block.timestamp.toI32();
   const platform = loadPlatform();
   const secSinceUpdated = timestamp - platform.latestSnapshotUpdatedAt;
   if (secSinceUpdated < SNAPSHOT_INTERVAL_SECS) {
@@ -48,30 +46,30 @@ export function handleTransfer(event: Transfer): void {
   // Aave Cellar
   const cellar = loadCellar(cellarLatest);
   const contract = CellarContract.bind(cellarLatest);
-  snapshotDay(event, cellar, contract);
-  snapshotHour(event, cellar, contract);
+  snapshotDay(block, cellar, contract);
+  snapshotHour(block, cellar, contract);
 
   // v1.5 Cellars
   for (let i = 0; i < V1PT5_CELLARS.length; i++) {
     const address = V1PT5_CELLARS[i];
     // Snapshot day must be called first since it initializes cellar.positions
     // and calculates the position distribution
-    cgSnapshotDay(event, address);
-    cgSnapshotHour(event, address);
+    v1_5SnapshotDay(block, address);
+    v1_5SnapshotHour(block, address);
   }
 
   // v2 Cellars
   for (let i = 0; i < V2_CELLARS.length; i++) {
     const address = V2_CELLARS[i];
-    v2SnapshotDay(event, address);
-    v2SnapshotHour(event, address);
+    v2SnapshotDay(block, address);
+    v2SnapshotHour(block, address);
   }
 
-  setPlatformSnapshotUpdatedAt(event.block.timestamp.toI32());
+  setPlatformSnapshotUpdatedAt(block.timestamp.toI32());
 }
 
 function snapshotDay(
-  event: Transfer,
+  block: ethereum.Block,
   cellar: Cellar,
   contract: CellarContract
 ): void {
@@ -80,11 +78,7 @@ function snapshotDay(
   }
   const cellarAsset = cellar.asset as string;
 
-  const snapshot = loadCellarDayData(
-    cellar.id,
-    event.block.timestamp,
-    cellarAsset
-  );
+  const snapshot = loadCellarDayData(cellar.id, block.timestamp, cellarAsset);
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
   const assetDecimals = BigInt.fromI32(asset.decimals);
@@ -133,7 +127,7 @@ function snapshotDay(
   } else {
     const prevEntity = loadPrevCellarDayData(
       cellar.id,
-      event.block.timestamp,
+      block.timestamp,
       cellarAsset
     );
 
@@ -166,13 +160,13 @@ function snapshotDay(
   }
 
   snapshot.tvlTotal = snapshot.tvlActive.plus(snapshot.tvlInactive);
-  snapshot.updatedAt = event.block.timestamp.toI32();
+  snapshot.updatedAt = block.timestamp.toI32();
 
   snapshot.save();
 }
 
 function snapshotHour(
-  event: Transfer,
+  block: ethereum.Block,
   cellar: Cellar,
   contract: CellarContract
 ): void {
@@ -181,11 +175,7 @@ function snapshotHour(
   }
   const cellarAsset = cellar.asset as string;
 
-  const snapshot = loadCellarHourData(
-    cellar.id,
-    event.block.timestamp,
-    cellarAsset
-  );
+  const snapshot = loadCellarHourData(cellar.id, block.timestamp, cellarAsset);
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
   const assetDecimals = BigInt.fromI32(asset.decimals);
@@ -228,7 +218,7 @@ function snapshotHour(
   } else {
     const prevEntity = loadPrevCellarHourData(
       cellar.id,
-      event.block.timestamp,
+      block.timestamp,
       cellarAsset
     );
 
@@ -262,7 +252,7 @@ function snapshotHour(
   }
 
   snapshot.tvlTotal = snapshot.tvlActive.plus(snapshot.tvlInactive);
-  snapshot.updatedAt = event.block.timestamp.toI32();
+  snapshot.updatedAt = block.timestamp.toI32();
 
   cellar.tvlActive = snapshot.tvlActive;
   cellar.tvlInactive = snapshot.tvlInactive;

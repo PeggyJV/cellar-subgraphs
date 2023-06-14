@@ -3,8 +3,6 @@ import {
   CellarV2__getPositionDataResult,
 } from "../../generated/CellarV2/CellarV2";
 import { Transfer, ERC20 } from "../../generated/USDC/ERC20";
-import { V2Adaptor } from "../../generated/USDC/V2Adaptor";
-import { getUsdPrice } from "../prices/index";
 import {
   CELLAR_START,
   ONE_SHARE,
@@ -27,13 +25,17 @@ import {
   BigDecimal,
   BigInt,
   Bytes,
+  ethereum,
   log,
 } from "@graphprotocol/graph-ts";
 
-export function snapshotDay(event: Transfer, cellarAddress: string): void {
+export function snapshotDay(
+  block: ethereum.Block,
+  cellarAddress: string
+): void {
   if (CELLAR_START.has(cellarAddress)) {
     const startBlock = CELLAR_START.get(cellarAddress);
-    if (event.block.number.lt(startBlock)) {
+    if (block.number.lt(startBlock)) {
       return;
     }
   }
@@ -53,11 +55,7 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
 
   const cellarAsset = cellar.asset as string;
 
-  const snapshot = loadCellarDayData(
-    cellar.id,
-    event.block.timestamp,
-    cellarAsset
-  );
+  const snapshot = loadCellarDayData(cellar.id, block.timestamp, cellarAsset);
   snapshot.positionDistribution = cellar.positionDistribution;
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
@@ -130,7 +128,7 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
 
       const prevSnap = loadPrevCellarDayData(
         cellar.id,
-        event.block.timestamp,
+        block.timestamp,
         cellarAsset
       );
 
@@ -143,14 +141,17 @@ export function snapshotDay(event: Transfer, cellarAddress: string): void {
     }
   }
 
-  snapshot.updatedAt = event.block.timestamp.toI32();
+  snapshot.updatedAt = block.timestamp.toI32();
   snapshot.save();
 }
 
-export function snapshotHour(event: Transfer, cellarAddress: string): void {
+export function snapshotHour(
+  block: ethereum.Block,
+  cellarAddress: string
+): void {
   if (CELLAR_START.has(cellarAddress)) {
     const startBlock = CELLAR_START.get(cellarAddress);
-    if (event.block.number.lt(startBlock)) {
+    if (block.number.lt(startBlock)) {
       return;
     }
   }
@@ -170,11 +171,7 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
 
   const cellarAsset = cellar.asset as string;
 
-  const snapshot = loadCellarHourData(
-    cellar.id,
-    event.block.timestamp,
-    cellarAsset
-  );
+  const snapshot = loadCellarHourData(cellar.id, block.timestamp, cellarAsset);
   snapshot.positionDistribution = cellar.positionDistribution;
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
@@ -247,7 +244,7 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
 
       const prevSnap = loadPrevCellarDayData(
         cellar.id,
-        event.block.timestamp,
+        block.timestamp,
         cellarAsset
       );
 
@@ -260,13 +257,11 @@ export function snapshotHour(event: Transfer, cellarAddress: string): void {
     }
   }
 
-  snapshot.updatedAt = event.block.timestamp.toI32();
+  snapshot.updatedAt = block.timestamp.toI32();
   snapshot.save();
 }
 
 const m = new Map<Address, CellarV2__getPositionDataResult>();
-const k = m.keys();
-const v = m.values();
 
 // Returns Map of postition address: adaptor address
 // export function getPositions(
