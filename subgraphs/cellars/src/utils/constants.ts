@@ -41,6 +41,16 @@ export const REAL_YIELD_USD =
   "0x97e6e0a40a3d02f12d1cec30ebfbae04e37c119e".toLowerCase();
 export const REAL_YIELD_ETH =
   "0xb5b29320d2dde5ba5bafa1ebcd270052070483ec".toLowerCase();
+export const REAL_YIELD_LINK =
+  "0x4068bdd217a45f8f668ef19f1e3a1f043e4c4934".toLowerCase();
+export const REAL_YIELD_1INCH =
+  "0xc7b69e15d86c5c1581dacce3cacaf5b68cd6596f".toLowerCase();
+export const REAL_YIELD_UNI =
+  "0x6a6af5393dc23d7e3db28d28ef422db7c40932b6".toLowerCase();
+export const REAL_YIELD_SNX =
+  "0xcbf2250f33c4161e18d4a2fa47464520af5216b5".toLowerCase();
+export const REAL_YIELD_ENS =
+  "0x18ea937aba6053bc232d9ae2c42abe7a8a2be440".toLowerCase();
 export const DEFI_STARS =
   "0x03df2a53cbed19b824347d6a45d09016c2d1676a".toLowerCase();
 
@@ -55,6 +65,11 @@ CELLAR_START.set(STEADY_UNI, BigInt.fromI32(16242434));
 CELLAR_START.set(STEADY_MATIC, BigInt.fromI32(16242434));
 CELLAR_START.set(REAL_YIELD_USD, BigInt.fromI32(16431804));
 CELLAR_START.set(REAL_YIELD_ETH, BigInt.fromI32(17023383));
+CELLAR_START.set(REAL_YIELD_LINK, BigInt.fromI32(17377190));
+CELLAR_START.set(REAL_YIELD_1INCH, BigInt.fromI32(17377190));
+CELLAR_START.set(REAL_YIELD_UNI, BigInt.fromI32(17377190));
+CELLAR_START.set(REAL_YIELD_SNX, BigInt.fromI32(17377190));
+CELLAR_START.set(REAL_YIELD_ENS, BigInt.fromI32(17377190));
 CELLAR_START.set(DEFI_STARS, BigInt.fromI32(17181497));
 
 export const V1PT5_CELLARS = new Array<string>();
@@ -75,4 +90,9 @@ V1PT5_CELLARS.push(STEADY_MATIC);
 export const V2_CELLARS = new Array<string>();
 V2_CELLARS.push(REAL_YIELD_USD);
 V2_CELLARS.push(REAL_YIELD_ETH);
+V2_CELLARS.push(REAL_YIELD_LINK);
+V2_CELLARS.push(REAL_YIELD_1INCH);
+V2_CELLARS.push(REAL_YIELD_UNI);
+V2_CELLARS.push(REAL_YIELD_SNX);
+V2_CELLARS.push(REAL_YIELD_ENS);
 V2_CELLARS.push(DEFI_STARS);
