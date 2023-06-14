@@ -13,6 +13,9 @@
     "deploy:hosted:test": "graph deploy --product hosted-service elkdao/cellarsnext",
     "create:prod": "graph create --node http://localhost:8020 peggyjv/cellars",
     "deploy:prod": "graph deploy --node http://localhost:8020 --ipfs https://ipfs.network.thegraph.com/ipfs peggyjv/cellars",
+    "create:prod:b": "graph create --node http://localhost:8020 peggyjv/cellars-b",
+    "remove:prod:b": "graph remove --node http://localhost:8020 peggyjv/cellars-b",
+    "deploy:prod:b": "graph deploy --node http://localhost:8020 --ipfs https://ipfs.network.thegraph.com/ipfs peggyjv/cellars-b",
     "test": "graph test",
     "graph:version": "graph -v"
   }

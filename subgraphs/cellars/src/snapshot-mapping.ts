@@ -1,5 +1,4 @@
 import { Cellar as CellarContract } from "../generated/Cellar/Cellar";
-import { Transfer } from "../generated/USDC/ERC20";
 import { Cellar } from "../generated/schema";
 import {
   CELLAR_AAVE_LATEST,
@@ -9,9 +8,7 @@ import {
   ONE_BI,
   ONE_SHARE,
   NEGATIVE_ONE_BI,
-  SNAPSHOT_INTERVAL_SECS,
 } from "./utils/constants";
-import { loadPlatform, setPlatformSnapshotUpdatedAt } from "./utils/entities";
 import {
   convertDecimals,
   loadCellar,
@@ -34,14 +31,13 @@ import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
 const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
 
+// Snapshot Cellars every N blocks
+const SNAPSHOT_INTERVAL = BigInt.fromI32(4);
+
 export function handleBlock(block: ethereum.Block): void {
-  const timestamp = block.timestamp.toI32();
-  const platform = loadPlatform();
-  const secSinceUpdated = timestamp - platform.latestSnapshotUpdatedAt;
-  if (secSinceUpdated < SNAPSHOT_INTERVAL_SECS) {
-    // Bail if we updated in the last 5 minutes
-    return;
-  }
+  // if (block.number.mod(SNAPSHOT_INTERVAL).notEqual(BigInt.zero())) {
+  //   return;
+  // }
 
   // Aave Cellar
   const cellar = loadCellar(cellarLatest);
@@ -64,8 +60,6 @@ export function handleBlock(block: ethereum.Block): void {
     v2SnapshotDay(block, address);
     v2SnapshotHour(block, address);
   }
-
-  setPlatformSnapshotUpdatedAt(block.timestamp.toI32());
 }
 
 function snapshotDay(

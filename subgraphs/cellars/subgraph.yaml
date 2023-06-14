@@ -3,8 +3,8 @@ description: Subgraph that tracks Cellars on the Sommelier network
 features:
   - grafting
 graft:
-  base: QmXcroCXm24GALqiPhuLM5vm6SS57DZ8pkfFZSYcpSNK1D
-  block: 17181497
+  base: Qmb3bSg2reV5g5mE1tEWKxA1D7AWdQePtxq7W82byK4FiD
+  block: 17481477
 schema:
   file: ./schema.graphql
 dataSources:
@@ -421,6 +421,176 @@ dataSources:
           handler: handleTransfer
       file: ./src/cellar-mapping.ts
   - kind: ethereum
+    name: RealYieldLINK # Real Yield LINK
+    network: mainnet
+    source:
+      address: "0x4068bdd217a45f8f668ef19f1e3a1f043e4c4934"
+      abi: CellarV2
+      startBlock: 17377190
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+      abis:
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+        - name: CellarV2
+          file: ./abis/cellar-v2.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
+    name: RealYield1INCH
+    network: mainnet
+    source:
+      address: "0xc7b69e15d86c5c1581dacce3cacaf5b68cd6596f"
+      abi: CellarV2
+      startBlock: 17377190
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+      abis:
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+        - name: CellarV2
+          file: ./abis/cellar-v2.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
+    name: RealYieldUNI
+    network: mainnet
+    source:
+      address: "0x6a6af5393dc23d7e3db28d28ef422db7c40932b6"
+      abi: CellarV2
+      startBlock: 17377190
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+      abis:
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+        - name: CellarV2
+          file: ./abis/cellar-v2.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
+    name: RealYieldSNX
+    network: mainnet
+    source:
+      address: "0xcbf2250f33c4161e18d4a2fa47464520af5216b5"
+      abi: CellarV2
+      startBlock: 17377190
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+      abis:
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+        - name: CellarV2
+          file: ./abis/cellar-v2.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
+    name: RealYieldENS
+    network: mainnet
+    source:
+      address: "0x18ea937aba6053bc232d9ae2c42abe7a8a2be440"
+      abi: CellarV2
+      startBlock: 17377190
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+      abis:
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+        - name: CellarV2
+          file: ./abis/cellar-v2.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
     name: DefiStars
     network: mainnet
     source:
@@ -455,12 +625,12 @@ dataSources:
           handler: handleTransfer
       file: ./src/cellar-mapping.ts
   - kind: ethereum
-    name: USDC
+    name: CellarSnapshot
     network: mainnet
     source:
-      address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" # USDC Token address
-      abi: ERC20
       startBlock: 15057867
+      address: "0x7bad5df5e11151dc5ee1a648800057c5c934c0d5"
+      abi: Cellar
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -519,7 +689,6 @@ dataSources:
           file: ./abis/Prices/SushiSwap/Pair.json
         - name: CalculationsSushiSwap
           file: ./abis/Prices/Calculations/SushiSwap.json
-      eventHandlers:
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-      file: ./src/usdc-mapping.ts
+      blockHandlers:
+        - handler: handleBlock
+      file: ./src/snapshot-mapping.ts
