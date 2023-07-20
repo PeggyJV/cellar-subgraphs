@@ -3,8 +3,8 @@ description: Subgraph that tracks Cellars on the Sommelier network
 features:
   - grafting
 graft:
-  base: QmbsY1sJUq8eoTMY7N85iYbUngBD2L7kjB6YqHtTLfYxTq
-  block: 17589948
+  base: QmXiUzaizg54Q41DGRXk1z7RUfdimNHXQnEpP3D69VEZEg
+  block: 17630563
 schema:
   file: ./schema.graphql
 dataSources:
@@ -631,6 +631,40 @@ dataSources:
       address: "0xdbe19d1c3f21b1bb250ca7bdae0687a97b5f77e6"
       abi: CellarV2
       startBlock: 17589948
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+      abis:
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+        - name: CellarV2
+          file: ./abis/cellar-v2.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
+    name: RealYieldBTC
+    network: mainnet
+    source:
+      address: "0x0274a704a6d9129f90a62ddc6f6024b33ecdad36"
+      abi: CellarV2
+      startBlock: 17630563
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

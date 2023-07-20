@@ -51,6 +51,8 @@ export const REAL_YIELD_SNX =
   "0xcbf2250f33c4161e18d4a2fa47464520af5216b5".toLowerCase();
 export const REAL_YIELD_ENS =
   "0x18ea937aba6053bc232d9ae2c42abe7a8a2be440".toLowerCase();
+export const REAL_YIELD_BTC =
+  "0x0274a704a6d9129f90a62ddc6f6024b33ecdad36".toLowerCase();
 export const DEFI_STARS =
   "0x03df2a53cbed19b824347d6a45d09016c2d1676a".toLowerCase();
 export const FRAXIMAL =
@@ -74,6 +76,7 @@ CELLAR_START.set(REAL_YIELD_SNX, BigInt.fromI32(17377190));
 CELLAR_START.set(REAL_YIELD_ENS, BigInt.fromI32(17377190));
 CELLAR_START.set(DEFI_STARS, BigInt.fromI32(17181497));
 CELLAR_START.set(FRAXIMAL, BigInt.fromI32(17589948));
+CELLAR_START.set(REAL_YIELD_BTC, BigInt.fromI32(17630563));
 
 export const V1PT5_CELLARS = new Array<string>();
 // ETH-BTC
@@ -98,5 +101,6 @@ V2_CELLARS.push(REAL_YIELD_1INCH);
 V2_CELLARS.push(REAL_YIELD_UNI);
 V2_CELLARS.push(REAL_YIELD_SNX);
 V2_CELLARS.push(REAL_YIELD_ENS);
+V2_CELLARS.push(REAL_YIELD_BTC);
 V2_CELLARS.push(DEFI_STARS);
 V2_CELLARS.push(FRAXIMAL);
