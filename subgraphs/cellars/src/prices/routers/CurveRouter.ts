@@ -1,5 +1,5 @@
-import { CurvePoolRegistry as CurvePoolRegistryContract } from "../../../generated/USDC/CurvePoolRegistry";
-import { CurveRegistry as CurveRegistryContract } from "../../../generated/USDC/CurveRegistry";
+import { CurvePoolRegistry as CurvePoolRegistryContract } from "../../../generated/CellarSnapshot/CurvePoolRegistry";
+import { CurveRegistry as CurveRegistryContract } from "../../../generated/CellarSnapshot/CurveRegistry";
 import * as constants from "../common/constants";
 import { CustomPriceType } from "../common/types";
 import * as utils from "../common/utils";

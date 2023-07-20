@@ -1,5 +1,5 @@
 import { ClearGateCellar } from "../../generated/CellarClearGateA/ClearGateCellar";
-import { Transfer, ERC20 } from "../../generated/USDC/ERC20";
+import { Transfer, ERC20 } from "../../generated/CellarSnapshot/ERC20";
 import { getUsdPrice } from "../prices/index";
 import {
   CELLAR_START,

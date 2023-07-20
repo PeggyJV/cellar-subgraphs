@@ -1,4 +1,4 @@
-import { ChainLinkContract } from "../../../generated/USDC/ChainLinkContract";
+import { ChainLinkContract } from "../../../generated/CellarSnapshot/ChainLinkContract";
 import * as constants from "../common/constants";
 import { CustomPriceType } from "../common/types";
 import { Address } from "@graphprotocol/graph-ts";

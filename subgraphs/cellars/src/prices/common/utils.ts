@@ -1,4 +1,4 @@
-import { _ERC20 } from "../../../generated/USDC/_ERC20";
+import { _ERC20 } from "../../../generated/CellarSnapshot/_ERC20";
 import * as constants from "./constants";
 import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 

@@ -1,8 +1,8 @@
 import {
   SushiSwapPair__getReservesResult,
   SushiSwapPair as SushiSwapPairContract,
-} from "../../../generated/USDC/SushiSwapPair";
-import { SushiSwapRouter as SushiSwapRouterContract } from "../../../generated/USDC/SushiSwapRouter";
+} from "../../../generated/CellarSnapshot/SushiSwapPair";
+import { SushiSwapRouter as SushiSwapRouterContract } from "../../../generated/CellarSnapshot/SushiSwapRouter";
 import * as constants from "../common/constants";
 import { CustomPriceType } from "../common/types";
 import * as utils from "../common/utils";

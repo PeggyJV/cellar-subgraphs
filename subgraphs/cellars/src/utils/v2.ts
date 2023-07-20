@@ -1,8 +1,8 @@
+import { Transfer, ERC20 } from "../../generated/CellarSnapshot/ERC20";
 import {
   CellarV2,
   CellarV2__getPositionDataResult,
 } from "../../generated/CellarV2/CellarV2";
-import { Transfer, ERC20 } from "../../generated/USDC/ERC20";
 import {
   CELLAR_START,
   ONE_SHARE,

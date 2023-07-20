@@ -1,4 +1,4 @@
-import { CalculationsSushiSwap as CalculationsSushiContract } from "../../../generated/USDC/CalculationsSushiSwap";
+import { CalculationsSushiSwap as CalculationsSushiContract } from "../../../generated/CellarSnapshot/CalculationsSushiSwap";
 import * as constants from "../common/constants";
 import { CustomPriceType } from "../common/types";
 import * as utils from "../common/utils";

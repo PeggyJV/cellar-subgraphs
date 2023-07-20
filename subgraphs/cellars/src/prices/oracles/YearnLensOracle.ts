@@ -1,4 +1,4 @@
-import { YearnLensContract } from "../../../generated/USDC/YearnLensContract";
+import { YearnLensContract } from "../../../generated/CellarSnapshot/YearnLensContract";
 import * as constants from "../common/constants";
 import { CustomPriceType } from "../common/types";
 import * as utils from "../common/utils";

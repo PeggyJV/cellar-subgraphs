@@ -1,4 +1,4 @@
-import { CalculationsCurve as CalculationsCurveContract } from "../../../generated/USDC/CalculationsCurve";
+import { CalculationsCurve as CalculationsCurveContract } from "../../../generated/CellarSnapshot/CalculationsCurve";
 import * as constants from "../common/constants";
 import { CustomPriceType } from "../common/types";
 import * as utils from "../common/utils";

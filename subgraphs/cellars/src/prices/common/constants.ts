@@ -1,5 +1,5 @@
-import { SushiSwapPair__getReservesResult } from "../../../generated/USDC/SushiSwapPair";
-import { UniswapPair__getReservesResult } from "../../../generated/USDC/UniswapPair";
+import { SushiSwapPair__getReservesResult } from "../../../generated/CellarSnapshot/SushiSwapPair";
+import { UniswapPair__getReservesResult } from "../../../generated/CellarSnapshot/UniswapPair";
 import * as ARBITRUM_ONE from "../config/arbitrumOne";
 import * as BSC from "../config/bsc";
 import * as FANTOM from "../config/fantom";
