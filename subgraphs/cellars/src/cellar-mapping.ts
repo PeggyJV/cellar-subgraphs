@@ -1,6 +1,6 @@
-import { Deposit, DepositIntoPosition, DepositLimitChanged, Withdraw, WithdrawFromPosition, Transfer, LiquidityLimitChanged } from "../generated/Cellar/Cellar";
-import { ZERO_BI } from "./utils/constants";
-import { loadWallet, loadOrCreateWallet, loadWalletCellarData, loadDeposit } from "./utils/entities";
+import { Deposit, DepositIntoPosition, DepositLimitChanged, Withdraw, WithdrawFromPosition, Transfer, LiquidityLimitChanged, Cellar } from "../generated/Cellar/Cellar";
+import { ZERO_BI, ONE_SHARE } from "./utils/constants";
+import { loadWallet, loadOrCreateWallet, loadWalletCellarData, loadBalanceChange } from "./utils/entities";
 import { loadCellar, loadCellarDayData, loadCellarHourData, loadOrCreateTokenERC20, loadWalletCellarShare, loadWalletDayData, normalizeDecimals } from "./utils/helpers";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 
@@ -9,6 +9,7 @@ export function handleDeposit(event: Deposit): void {
   // Cellar
   const cellarAddress = event.address;
   const cellar = loadCellar(cellarAddress);
+  const contract = Cellar.bind(cellarAddress);
 
   const cellarAsset = cellar.asset as string;
   const asset = loadOrCreateTokenERC20(cellarAsset);
@@ -46,12 +47,16 @@ export function handleDeposit(event: Deposit): void {
   const walletDayData = loadWalletDayData(wallet, timestamp);
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(liqAmount);
 
-  const depositData = loadDeposit(
+  const depositData = loadBalanceChange(
     event.transaction.hash.toHexString(),
+    event.logIndex.toString(),
     walletAddress,
     cellarAddress.toHexString(),
     timestamp.toI32(),
-    liqAmount
+    liqAmount,
+    event.params.shares,
+    contract.try_convertToAssets(ONE_SHARE).value,
+    "DEPOSIT"
   );
 
   // Save the entities we've modified
@@ -74,6 +79,7 @@ export function handleWithdraw(event: Withdraw): void {
 
   const cellarAsset = cellar.asset as string;
   const asset = loadOrCreateTokenERC20(cellarAsset);
+  const contract = Cellar.bind(cellarAddress);
 
   // removedLiquidityAllTime
   const liqAmount = normalizeDecimals(
@@ -122,6 +128,18 @@ export function handleWithdraw(event: Withdraw): void {
   walletDayData.removedLiquidity =
     walletDayData.removedLiquidity.plus(liqAmount);
 
+  const withdrawData = loadBalanceChange(
+    event.transaction.hash.toHexString(),
+    event.logIndex.toString(),
+    walletAddress,
+    cellarAddress.toHexString(),
+    timestamp.toI32(),
+    liqAmount,
+    event.params.shares,
+    contract.try_convertToAssets(ONE_SHARE).value,
+    "WITHDRAW"
+  );
+
   // Save entities we've modified
   cellar.save();
   cellarDayData.save();
@@ -129,6 +147,7 @@ export function handleWithdraw(event: Withdraw): void {
   walletDayData.save();
   wallet.save();
   walletCellarData.save();
+  withdrawData.save();
 }
 
 export function handleDepositIntoPosition(event: DepositIntoPosition): void {

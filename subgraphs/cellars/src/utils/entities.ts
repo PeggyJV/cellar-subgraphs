@@ -1,4 +1,4 @@
-import { Cellar, Platform, Wallet, WalletCellarData, Deposit } from "../../generated/schema";
+import { Cellar, Platform, Wallet, WalletCellarData, BalanceChange } from "../../generated/schema";
 import { ZERO_BI } from "./constants";
 import { BigInt } from "@graphprotocol/graph-ts";
 
@@ -90,38 +90,55 @@ export function loadWalletCellarData(
 }
 
 
-export function initDeposit(
+export function initBalanceChange(
   txHash: string,
+  eventIndex: string,
   walletAddress: string,
   cellarAddress: string,
-  date: u32,
-  amount: BigInt
-): Deposit {
-  const entity = new Deposit(txHash);
+  blockTimestamp: u32,
+  amount: BigInt,
+  shares: BigInt,
+  shareValue: BigInt,
+  kind: string
+): BalanceChange {
+  const id = `${txHash}-${eventIndex}`;
+  const entity = new BalanceChange(id);
+
   entity.amount = amount;
-  entity.depositerAddress = walletAddress;
+  entity.wallet = walletAddress;
   entity.cellarAddress = cellarAddress;
-  entity.date = date;
+  entity.date = blockTimestamp;
+  entity.shares = shares;
+  entity.shareValue = shareValue;
+  entity.kind = kind;
 
   return entity;
 }
 
-export function loadDeposit(
+export function loadBalanceChange(
   txHash: string,
+  eventIndex: string,
   walletAddress: string,
   cellarAddress: string,
   blockTimestamp: u32,
-  amount: BigInt
-): Deposit {
-  let entity = Deposit.load(txHash);
+  amount: BigInt,
+  shares: BigInt,
+  shareValue: BigInt,
+  kind: string
+): BalanceChange {
+  let entity = BalanceChange.load(txHash);
 
   if (entity == null) {
-    entity = initDeposit(
+    entity = initBalanceChange(
       txHash,
+      eventIndex,
       walletAddress,
       cellarAddress,
       blockTimestamp,
-      amount
+      amount,
+      shares,
+      shareValue,
+      kind
     );
   }
 

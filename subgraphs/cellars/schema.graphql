@@ -21,14 +21,18 @@ type Wallet @entity {
   cellarData: [WalletCellarData!]! @derivedFrom(field: "wallet")
   cellarShares: [WalletCellarShare!]! @derivedFrom(field: "wallet")
   dayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
+  balanceChanges: [BalanceChange!]! @derivedFrom(field: "wallet")
 }
 
-type Deposit @entity {
-  id: ID! # tx address
+type BalanceChange @entity {
+  id: ID! # txHash-eventIndex
   amount: BigInt!
   date: Int!
-  depositerAddress: String!
+  wallet: Wallet!
   cellarAddress: String!
+  shares: BigInt!
+  shareValue: BigInt!
+  kind: String!
 }
 
 type WalletCellarData @entity {
