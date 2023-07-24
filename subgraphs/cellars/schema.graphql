@@ -23,6 +23,14 @@ type Wallet @entity {
   dayDatas: [WalletDayData!]! @derivedFrom(field: "wallet")
 }
 
+type Deposit @entity {
+  id: ID! # tx address
+  amount: BigInt!
+  date: Int!
+  depositerAddress: String!
+  cellarAddress: String!
+}
+
 type WalletCellarData @entity {
   id: ID! # wallet address - cellar address
   wallet: Wallet!

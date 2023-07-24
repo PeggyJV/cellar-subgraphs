@@ -1,28 +1,9 @@
-import {
-  Deposit,
-  DepositIntoPosition,
-  DepositLimitChanged,
-  Withdraw,
-  WithdrawFromPosition,
-  Transfer,
-  LiquidityLimitChanged,
-} from "../generated/Cellar/Cellar";
+import { Deposit, DepositIntoPosition, DepositLimitChanged, Withdraw, WithdrawFromPosition, Transfer, LiquidityLimitChanged } from "../generated/Cellar/Cellar";
 import { ZERO_BI } from "./utils/constants";
-import {
-  loadWallet,
-  loadOrCreateWallet,
-  loadWalletCellarData,
-} from "./utils/entities";
-import {
-  loadCellar,
-  loadCellarDayData,
-  loadCellarHourData,
-  loadOrCreateTokenERC20,
-  loadWalletCellarShare,
-  loadWalletDayData,
-  normalizeDecimals,
-} from "./utils/helpers";
+import { loadWallet, loadOrCreateWallet, loadWalletCellarData, loadDeposit } from "./utils/entities";
+import { loadCellar, loadCellarDayData, loadCellarHourData, loadOrCreateTokenERC20, loadWalletCellarShare, loadWalletDayData, normalizeDecimals } from "./utils/helpers";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
+
 
 export function handleDeposit(event: Deposit): void {
   // Cellar
@@ -65,6 +46,14 @@ export function handleDeposit(event: Deposit): void {
   const walletDayData = loadWalletDayData(wallet, timestamp);
   walletDayData.addedLiquidity = walletDayData.addedLiquidity.plus(liqAmount);
 
+  const depositData = loadDeposit(
+    event.transaction.hash.toHexString(),
+    walletAddress,
+    cellarAddress.toHexString(),
+    timestamp.toI32(),
+    liqAmount
+  );
+
   // Save the entities we've modified
   cellar.save();
   cellarDayData.save();
@@ -72,6 +61,7 @@ export function handleDeposit(event: Deposit): void {
   walletDayData.save();
   wallet.save();
   walletCellarData.save();
+  depositData.save();
 }
 
 export function handleWithdraw(event: Withdraw): void {

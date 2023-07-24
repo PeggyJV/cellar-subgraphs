@@ -1,12 +1,10 @@
-import {
-  Cellar,
-  Platform,
-  Wallet,
-  WalletCellarData,
-} from "../../generated/schema";
+import { Cellar, Platform, Wallet, WalletCellarData, Deposit } from "../../generated/schema";
 import { ZERO_BI } from "./constants";
+import { BigInt } from "@graphprotocol/graph-ts";
+
 
 export const PLATFORM_ID = "platform";
+
 export function loadPlatform(): Platform {
   let entity = Platform.load(PLATFORM_ID);
   if (entity == null) {
@@ -86,6 +84,45 @@ export function loadWalletCellarData(
   let entity = WalletCellarData.load(id);
   if (entity == null) {
     entity = initWalletCellarData(walletAddress, cellarAddress);
+  }
+
+  return entity;
+}
+
+
+export function initDeposit(
+  txHash: string,
+  walletAddress: string,
+  cellarAddress: string,
+  date: u32,
+  amount: BigInt
+): Deposit {
+  const entity = new Deposit(txHash);
+  entity.amount = amount;
+  entity.depositerAddress = walletAddress;
+  entity.cellarAddress = cellarAddress;
+  entity.date = date;
+
+  return entity;
+}
+
+export function loadDeposit(
+  txHash: string,
+  walletAddress: string,
+  cellarAddress: string,
+  blockTimestamp: u32,
+  amount: BigInt
+): Deposit {
+  let entity = Deposit.load(txHash);
+
+  if (entity == null) {
+    entity = initDeposit(
+      txHash,
+      walletAddress,
+      cellarAddress,
+      blockTimestamp,
+      amount
+    );
   }
 
   return entity;
