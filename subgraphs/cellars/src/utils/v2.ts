@@ -98,6 +98,10 @@ export function snapshotDay(
     const holdingPosition = getHoldingPosition(contract);
 
     if (holdingPosition != Address.zero()) {
+      // FIXME:
+      // remove this hack or create a mapping of cellar -> holding positions
+      // instead of getting it dynamically. Historically the holding position
+      // has never changed until we needed to block deposits to RYE.
       let holdingContract = ERC20.bind(holdingPosition);
       if (cellarAddress == REAL_YIELD_ETH) {
         holdingContract = ERC20.bind(WETH_ADDRESS);
