@@ -102,11 +102,7 @@ export function snapshotDay(
       // remove this hack or create a mapping of cellar -> holding positions
       // instead of getting it dynamically. Historically the holding position
       // has never changed until we needed to block deposits to RYE.
-      let holdingContract = ERC20.bind(holdingPosition);
-      if (cellarAddress == REAL_YIELD_ETH) {
-        holdingContract = ERC20.bind(WETH_ADDRESS);
-      }
-
+      const holdingContract = ERC20.bind(holdingPosition);
       const holdingBalance = holdingContract.balanceOf(address);
 
       const holdingAsset = loadOrCreateTokenERC20(
@@ -373,21 +369,11 @@ export function adaptorDataToAddresses(data: Bytes): Address[] {
 
 export function getHoldingPosition(contract: CellarV2): Address {
   let value = Address.zero();
-  const holdingPositionResult = contract.try_holdingPosition();
-  if (!holdingPositionResult.reverted) {
-    const holdingPositionId = holdingPositionResult.value;
-    const positionDataResult = contract.try_getPositionData(holdingPositionId);
-
-    if (!positionDataResult.reverted) {
-      const data = positionDataResult.value.getAdaptorData();
-      value = adaptorDataToAddresses(data)[0];
-    } else {
-      log.warning("Could not call getPositionData with id: {}", [
-        holdingPositionId.toString(),
-      ]);
-    }
+  const asset = contract.try_asset();
+  if (!asset.reverted) {
+    value = asset.value;
   } else {
-    log.warning("Could not call cellar.holdingPosition", []);
+    log.warning("Could not call cellar.asset", []);
   }
 
   return value;
