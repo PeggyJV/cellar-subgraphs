@@ -10,6 +10,8 @@ import {
   ZERO_BI,
   TEN_BI,
   NEGATIVE_ONE_BI,
+  REAL_YIELD_ETH,
+  WETH_ADDRESS,
 } from "./constants";
 import {
   convertDecimals,
@@ -96,7 +98,11 @@ export function snapshotDay(
     const holdingPosition = getHoldingPosition(contract);
 
     if (holdingPosition != Address.zero()) {
-      const holdingContract = ERC20.bind(holdingPosition);
+      let holdingContract = ERC20.bind(holdingPosition);
+      if (cellarAddress == REAL_YIELD_ETH) {
+        holdingContract = ERC20.bind(WETH_ADDRESS);
+      }
+
       const holdingBalance = holdingContract.balanceOf(address);
 
       const holdingAsset = loadOrCreateTokenERC20(

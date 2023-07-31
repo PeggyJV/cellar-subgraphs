@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 
 export const SNAPSHOT_INTERVAL_SECS = 60 * 5; // 5 minutes
 
@@ -12,6 +12,10 @@ export const ZERO_BD = ZERO_BI.toBigDecimal();
 export const ONE_BD = ONE_BI.toBigDecimal();
 
 export const ONE_SHARE = ONE_BI.times(TEN_BI.pow(18));
+
+export const WETH_ADDRESS = Address.fromString(
+  "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+);
 
 export const CELLAR_AAVE_LATEST =
   "0x7bad5df5e11151dc5ee1a648800057c5c934c0d5".toLowerCase();
