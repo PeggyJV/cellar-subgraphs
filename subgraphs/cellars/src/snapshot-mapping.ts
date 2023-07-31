@@ -32,12 +32,12 @@ import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
 
 // Snapshot Cellars every N blocks
-const SNAPSHOT_INTERVAL = BigInt.fromI32(4);
+const SNAPSHOT_INTERVAL = BigInt.fromI32(10);
 
 export function handleBlock(block: ethereum.Block): void {
-  // if (block.number.mod(SNAPSHOT_INTERVAL).notEqual(BigInt.zero())) {
-  //   return;
-  // }
+  if (block.number.mod(SNAPSHOT_INTERVAL).notEqual(BigInt.zero())) {
+     return;
+  }
 
   // Aave Cellar
   const cellar = loadCellar(cellarLatest);
