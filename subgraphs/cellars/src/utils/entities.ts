@@ -9,7 +9,8 @@ export function loadPlatform(): Platform {
   let entity = Platform.load(PLATFORM_ID);
   if (entity == null) {
     entity = new Platform(PLATFORM_ID);
-    entity.latestSnapshotUpdatedAt = 0;
+    entity.latestSnapshotUpdatedAt = ZERO_BI;
+    entity.latestSnapshotUpdatedAtBlock = ZERO_BI;
   }
 
   return entity;

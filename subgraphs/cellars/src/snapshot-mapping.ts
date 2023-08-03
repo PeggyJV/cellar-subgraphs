@@ -9,6 +9,7 @@ import {
   ONE_SHARE,
   NEGATIVE_ONE_BI,
 } from "./utils/constants";
+import { loadPlatform } from "./utils/entities";
 import {
   convertDecimals,
   loadCellar,
@@ -18,6 +19,7 @@ import {
   loadPrevCellarHourData,
   loadOrCreateTokenERC20,
   normalizeDecimals,
+  HOUR_SECONDS,
 } from "./utils/helpers";
 import {
   snapshotDay as v1_5SnapshotDay,
@@ -34,9 +36,45 @@ const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
 // Snapshot Cellars every N blocks
 const SNAPSHOT_INTERVAL = BigInt.fromI32(10);
 
+// Snapshot window in seconds before the top of the hour
+const SNAPSHOT_WINDOW_SECS = 45;
+
+// Checks to see if the block timestamp is within the snapshot window
+function isWithinSnapshotWindow(block: ethereum.Block): Boolean {
+  const blockTimestamp = block.timestamp.toI32();
+
+  // current hour in epoch seconds
+  const currentHourStart = (blockTimestamp / HOUR_SECONDS) * HOUR_SECONDS;
+  const currentHourEnd = currentHourStart + HOUR_SECONDS - 1;
+  const startWindow = currentHourEnd - SNAPSHOT_WINDOW_SECS;
+
+  // check current block timestamp falls outside of the snapshot window
+  if (blockTimestamp < startWindow || blockTimestamp > currentHourEnd) {
+    return false;
+  }
+
+  const platform = loadPlatform();
+  const updatedAt = platform.latestSnapshotUpdatedAt;
+
+  // check if an update has already happened in the snapshot window
+  if (
+    updatedAt != 0 &&
+    updatedAt >= startWindow &&
+    updatedAt <= currentHourEnd
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function shouldSnapshotBlock(block: ethereum.Block): Boolean {
+  return block.number.mod(SNAPSHOT_INTERVAL).equals(BigInt.zero());
+}
+
 export function handleBlock(block: ethereum.Block): void {
-  if (block.number.mod(SNAPSHOT_INTERVAL).notEqual(BigInt.zero())) {
-     return;
+  if (!isWithinSnapshotWindow(block)) {
+    return;
   }
 
   // Aave Cellar
@@ -60,6 +98,12 @@ export function handleBlock(block: ethereum.Block): void {
     v2SnapshotDay(block, address);
     v2SnapshotHour(block, address);
   }
+
+  // Checkpoint the block we snapshotted at
+  const platform = loadPlatform();
+  platform.latestSnapshotUpdatedAt = block.timestamp.toI32();
+  platform.latestSnapshotUpdatedAtBlock = block.number.toI32();
+  platform.save();
 }
 
 function snapshotDay(
