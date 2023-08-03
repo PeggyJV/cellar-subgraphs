@@ -105,56 +105,6 @@ type CellarDayData @entity {
   earnings: BigInt!
 }
 
-type CellarHourDataUpdates @entity {
-  id: ID! # ??
-  date: Int! # epoch timestamp
-  cellar: Cellar!
-  asset: TokenERC20
-  updatedAt: Int!
-
-  addedLiquidity: BigInt!
-  removedLiquidity: BigInt!
-  numWallets: Int!
-
-  tvlActive: BigInt!
-  tvlInactive: BigInt!
-  tvlInvested: BigInt!
-  tvlTotal: BigInt!
-
-  shareValue: BigInt!
-  shareValueHigh: BigInt!
-  shareValueLow: BigInt!
-  shareProfitRatio: BigDecimal!
-  positionDistribution: [BigDecimal!]!
-
-  earnings: BigInt!
-}
-
-type CellarDayDataUpdates @entity {
-  id: ID! # timestamp at the start of a day Date.now / 86400
-  date: Int! # epoch timestamp
-  cellar: Cellar!
-  asset: TokenERC20!
-  updatedAt: Int!
-
-  addedLiquidity: BigInt!
-  removedLiquidity: BigInt!
-  numWallets: Int!
-
-  tvlActive: BigInt!
-  tvlInactive: BigInt!
-  tvlInvested: BigInt!
-  tvlTotal: BigInt!
-
-  shareValue: BigInt!
-  shareValueHigh: BigInt!
-  shareValueLow: BigInt!
-  shareProfitRatio: BigDecimal!
-  positionDistribution: [BigDecimal!]!
-
-  earnings: BigInt!
-}
-
 type CellarHourData @entity {
   id: ID! # ??
   date: Int! # epoch timestamp

@@ -76,27 +76,30 @@ export function handleBlock(block: ethereum.Block): void {
   if (!isWithinSnapshotWindow(block)) {
     return;
   }
+  // !Important
+  // Hour snapshots must take place before day snapshots.
+  // Day snapshots copy the values from hour snapshots to avoid
+  // duplication of RPC calls
 
   // Aave Cellar
   const cellar = loadCellar(cellarLatest);
-  const contract = CellarContract.bind(cellarLatest);
-  snapshotDay(block, cellar, contract);
-  snapshotHour(block, cellar, contract);
+  snapshotHour(block, cellar);
+  snapshotDay(block, cellar);
 
   // v1.5 Cellars
   for (let i = 0; i < V1PT5_CELLARS.length; i++) {
     const address = V1PT5_CELLARS[i];
     // Snapshot day must be called first since it initializes cellar.positions
     // and calculates the position distribution
-    v1_5SnapshotDay(block, address);
     v1_5SnapshotHour(block, address);
+    v1_5SnapshotDay(block, address);
   }
 
   // v2 Cellars
   for (let i = 0; i < V2_CELLARS.length; i++) {
     const address = V2_CELLARS[i];
-    v2SnapshotDay(block, address);
     v2SnapshotHour(block, address);
+    v2SnapshotDay(block, address);
   }
 
   // Checkpoint the block we snapshotted at
@@ -106,17 +109,62 @@ export function handleBlock(block: ethereum.Block): void {
   platform.save();
 }
 
-function snapshotDay(
-  block: ethereum.Block,
-  cellar: Cellar,
-  contract: CellarContract
-): void {
+function snapshotDay(block: ethereum.Block, cellar: Cellar): void {
   if (cellar.asset == null) {
     return;
   }
   const cellarAsset = cellar.asset as string;
 
   const snapshot = loadCellarDayData(cellar.id, block.timestamp, cellarAsset);
+
+  // Load hour snapshot data and copy values so we don't fetch
+  // from RPC twice
+  const hour = loadCellarHourData(cellar.id, block.timestamp, cellarAsset);
+  snapshot.updatedAt = hour.updatedAt;
+  snapshot.addedLiquidity = hour.addedLiquidity;
+  snapshot.removedLiquidity = hour.removedLiquidity;
+  snapshot.numWallets = hour.numWallets;
+
+  snapshot.tvlActive = hour.tvlActive;
+  snapshot.tvlInactive = hour.tvlInactive;
+  snapshot.tvlInvested = hour.tvlInvested;
+  snapshot.tvlTotal = hour.tvlTotal;
+
+  snapshot.shareValue = hour.shareValue;
+  snapshot.shareValueHigh = hour.shareValueHigh;
+  snapshot.shareValueLow = hour.shareValueLow;
+  snapshot.shareProfitRatio = hour.shareProfitRatio;
+  snapshot.positionDistribution = hour.positionDistribution;
+  snapshot.earnings = hour.earnings;
+
+  const prevEntity = loadPrevCellarDayData(
+    cellar.id,
+    block.timestamp,
+    cellarAsset
+  );
+
+  // Calculate earnings
+  const activeAssets = hour.tvlActive;
+  snapshot.tvlActive = activeAssets;
+  const accumulated = activeAssets.minus(snapshot.tvlInvested);
+  const prevAccumulated = prevEntity.tvlActive.minus(prevEntity.tvlInvested);
+  snapshot.earnings = accumulated.minus(prevAccumulated);
+
+  if (snapshot.earnings < ZERO_BI) {
+    snapshot.earnings = ZERO_BI;
+  }
+
+  snapshot.save();
+}
+
+function snapshotHour(block: ethereum.Block, cellar: Cellar): void {
+  if (cellar.asset == null) {
+    return;
+  }
+  const contract = CellarContract.bind(Address.fromString(cellar.id));
+  const cellarAsset = cellar.asset as string;
+
+  const snapshot = loadCellarHourData(cellar.id, block.timestamp, cellarAsset);
 
   const asset = loadOrCreateTokenERC20(cellarAsset);
   const assetDecimals = BigInt.fromI32(asset.decimals);
@@ -143,97 +191,6 @@ function snapshotDay(
       snapshot.shareValueHigh.equals(NEGATIVE_ONE_BI) || // default value
       snapshot.shareValue.gt(snapshot.shareValueHigh)
     ) {
-      snapshot.shareValueHigh = snapshot.shareValue;
-    }
-
-    const singleShare = convertDecimals(ONE_BI, ZERO_BI, assetDecimals);
-    const shareProfitRatio = cellar.shareValue
-      .minus(singleShare)
-      .toBigDecimal()
-      .div(singleShare.toBigDecimal());
-
-    cellar.shareProfitRatio = shareProfitRatio;
-    snapshot.shareProfitRatio = shareProfitRatio;
-  }
-
-  const activeAssetsResult = contract.try_totalBalance();
-  if (activeAssetsResult.reverted) {
-    log.warning("Could not call cellar.activeAssets: {}", [cellar.id]);
-
-    snapshot.tvlActive = ZERO_BI;
-    snapshot.earnings = ZERO_BI;
-  } else {
-    const prevEntity = loadPrevCellarDayData(
-      cellar.id,
-      block.timestamp,
-      cellarAsset
-    );
-
-    const activeAssets = normalizeDecimals(
-      activeAssetsResult.value,
-      BigInt.fromI32(asset.decimals)
-    );
-
-    snapshot.tvlActive = activeAssets;
-    const accumulated = activeAssets.minus(snapshot.tvlInvested);
-    const prevAccumulated = prevEntity.tvlActive.minus(prevEntity.tvlInvested);
-    snapshot.earnings = accumulated.minus(prevAccumulated);
-
-    if (snapshot.earnings < ZERO_BI) {
-      snapshot.earnings = ZERO_BI;
-    }
-  }
-
-  const inactiveAssetsResult = contract.try_totalHoldings();
-  if (inactiveAssetsResult.reverted) {
-    log.warning("Could not call cellar.inactiveAssets: {}", [cellar.id]);
-
-    snapshot.tvlInactive = ZERO_BI;
-  } else {
-    const inactiveAssets = normalizeDecimals(
-      inactiveAssetsResult.value,
-      BigInt.fromI32(asset.decimals)
-    );
-    snapshot.tvlInactive = inactiveAssets;
-  }
-
-  snapshot.tvlTotal = snapshot.tvlActive.plus(snapshot.tvlInactive);
-  snapshot.updatedAt = block.timestamp.toI32();
-
-  snapshot.save();
-}
-
-function snapshotHour(
-  block: ethereum.Block,
-  cellar: Cellar,
-  contract: CellarContract
-): void {
-  if (cellar.asset == null) {
-    return;
-  }
-  const cellarAsset = cellar.asset as string;
-
-  const snapshot = loadCellarHourData(cellar.id, block.timestamp, cellarAsset);
-
-  const asset = loadOrCreateTokenERC20(cellarAsset);
-  const assetDecimals = BigInt.fromI32(asset.decimals);
-
-  snapshot.tvlInvested = cellar.tvlInvested;
-
-  const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
-  if (convertShareResult.reverted) {
-    log.warning("Could not call cellar.converToAssets: {}", [cellar.id]);
-  } else {
-    cellar.shareValue = convertShareResult.value;
-    snapshot.shareValue = convertShareResult.value;
-
-    // Set low candle
-    if (snapshot.shareValue < snapshot.shareValueLow) {
-      snapshot.shareValueLow = snapshot.shareValue;
-    }
-
-    // Set high candle
-    if (snapshot.shareValue > snapshot.shareValueHigh) {
       snapshot.shareValueHigh = snapshot.shareValue;
     }
 
