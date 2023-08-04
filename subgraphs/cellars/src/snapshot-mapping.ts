@@ -40,7 +40,7 @@ const SNAPSHOT_INTERVAL = BigInt.fromI32(10);
 const SNAPSHOT_WINDOW_SECS = 45;
 
 // Checks to see if the block timestamp is within the snapshot window
-function isWithinSnapshotWindow(block: ethereum.Block): Boolean {
+function isWithinSnapshotWindow(block: ethereum.Block): bool {
   const blockTimestamp = block.timestamp.toI32();
 
   // current hour in epoch seconds
