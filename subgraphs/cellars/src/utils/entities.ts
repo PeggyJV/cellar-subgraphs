@@ -10,6 +10,7 @@ export function loadPlatform(): Platform {
   if (entity == null) {
     entity = new Platform(PLATFORM_ID);
     entity.latestSnapshotUpdatedAt = 0;
+    entity.latestSnapshotUpdatedAtBlock = 0;
   }
 
   return entity;

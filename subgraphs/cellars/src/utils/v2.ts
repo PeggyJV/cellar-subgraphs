@@ -48,106 +48,29 @@ export function snapshotDay(
     return;
   }
 
-  const contract = CellarV2.bind(address);
-
-  // Get positions, save on cellar
-  // const positions = getPositions(contract);
-  // cellar.positions = positions.keys();
-  // cellar.positionDistribution = getPositionDistribution(positions, address);
-
   const cellarAsset = cellar.asset as string;
-
   const snapshot = loadCellarDayData(cellar.id, block.timestamp, cellarAsset);
-  snapshot.positionDistribution = cellar.positionDistribution;
 
-  const asset = loadOrCreateTokenERC20(cellarAsset);
+  // Load hour snapshot data and copy values so we don't fetch
+  // from RPC twice
+  const hour = loadCellarHourData(cellar.id, block.timestamp, cellarAsset);
+  snapshot.updatedAt = hour.updatedAt;
+  snapshot.addedLiquidity = hour.addedLiquidity;
+  snapshot.removedLiquidity = hour.removedLiquidity;
+  snapshot.numWallets = hour.numWallets;
 
-  // TODO
-  // snapshot.tvlInvested = cellar.tvlInvested
+  snapshot.tvlActive = hour.tvlActive;
+  snapshot.tvlInactive = hour.tvlInactive;
+  snapshot.tvlInvested = hour.tvlInvested;
+  snapshot.tvlTotal = hour.tvlTotal;
 
-  const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
-  if (convertShareResult.reverted) {
-    log.warning("Could not call cellar.convertToAssets: {}", [cellar.id]);
-  } else {
-    cellar.shareValue = convertShareResult.value;
-    snapshot.shareValue = convertShareResult.value;
+  snapshot.shareValue = hour.shareValue;
+  snapshot.shareValueHigh = hour.shareValueHigh;
+  snapshot.shareValueLow = hour.shareValueLow;
+  snapshot.shareProfitRatio = hour.shareProfitRatio;
+  snapshot.positionDistribution = hour.positionDistribution;
+  snapshot.earnings = hour.earnings;
 
-    // Set low candle
-    if (
-      snapshot.shareValueLow.equals(NEGATIVE_ONE_BI) || // default value
-      snapshot.shareValue.lt(snapshot.shareValueLow)
-    ) {
-      snapshot.shareValueLow = snapshot.shareValue;
-    }
-
-    // Set high candle
-    if (
-      snapshot.shareValueHigh.equals(NEGATIVE_ONE_BI) || // default value
-      snapshot.shareValue.gt(snapshot.shareValueHigh)
-    ) {
-      snapshot.shareValueHigh = snapshot.shareValue;
-    }
-  }
-
-  const totalAssetsResult = contract.try_totalAssets();
-  if (totalAssetsResult.reverted) {
-    log.warning("Could not call cellar.totalAssets: {}", [cellar.id]);
-  }
-
-  if (!totalAssetsResult.reverted) {
-    const holdingPosition = getHoldingPosition(contract);
-
-    if (holdingPosition != Address.zero()) {
-      // FIXME:
-      // remove this hack or create a mapping of cellar -> holding positions
-      // instead of getting it dynamically. Historically the holding position
-      // has never changed until we needed to block deposits to RYE.
-      const holdingContract = ERC20.bind(holdingPosition);
-      const holdingBalance = holdingContract.balanceOf(address);
-
-      const holdingAsset = loadOrCreateTokenERC20(
-        holdingPosition.toHexString()
-      );
-      const holdingDecimals = BigInt.fromI32(holdingAsset.decimals);
-      const inactiveAssets = normalizeDecimals(holdingBalance, holdingDecimals);
-
-      const totalAssets = normalizeDecimals(
-        totalAssetsResult.value,
-        BigInt.fromI32(asset.decimals)
-      );
-
-      const singleShare = convertDecimals(ONE_BI, ZERO_BI, holdingDecimals);
-      const shareProfitRatio = cellar.shareValue
-        .minus(singleShare)
-        .toBigDecimal()
-        .div(singleShare.toBigDecimal());
-      snapshot.shareProfitRatio = shareProfitRatio;
-      snapshot.tvlInactive = inactiveAssets;
-      snapshot.tvlTotal = totalAssets;
-      snapshot.tvlActive = snapshot.tvlTotal.minus(inactiveAssets);
-
-      cellar.shareProfitRatio = shareProfitRatio;
-      cellar.tvlInactive = snapshot.tvlInactive;
-      cellar.tvlTotal = snapshot.tvlTotal;
-      cellar.tvlActive = snapshot.tvlActive;
-      cellar.save();
-
-      const prevSnap = loadPrevCellarDayData(
-        cellar.id,
-        block.timestamp,
-        cellarAsset
-      );
-
-      // totalAssets[now] + withdrawnAssets[now] - totalAssets[yesterday] + withdrawnAssets[yesterday] - addedLiquidity[now]
-      snapshot.earnings = snapshot.tvlTotal
-        .minus(prevSnap.tvlTotal)
-        .plus(prevSnap.removedLiquidity)
-        .plus(snapshot.removedLiquidity)
-        .minus(snapshot.addedLiquidity);
-    }
-  }
-
-  snapshot.updatedAt = block.timestamp.toI32();
   snapshot.save();
 }
 
@@ -187,7 +110,7 @@ export function snapshotHour(
 
   const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
   if (convertShareResult.reverted) {
-    log.warning("Could not call cellar.converToAssets: {}", [cellar.id]);
+    log.warning("Could not call cellar.convertToAssets: {}", [cellar.id]);
   } else {
     cellar.shareValue = convertShareResult.value;
     snapshot.shareValue = convertShareResult.value;

@@ -2,6 +2,7 @@ type Platform @entity {
   id: ID! # platform
 
   latestSnapshotUpdatedAt: Int!
+  latestSnapshotUpdatedAtBlock: Int!
 }
 
 # Always in USD for now
