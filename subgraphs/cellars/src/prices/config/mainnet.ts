@@ -1,5 +1,6 @@
 import { Address, TypedMap } from "@graphprotocol/graph-ts";
 
+
 export const NETWORK_STRING = "mainnet";
 
 ///////////////////////////////////////////////////////////////////////////
@@ -104,4 +105,8 @@ WHITELIST_TOKENS.set(
 WHITELIST_TOKENS.set(
   "LINK",
   Address.fromString("0x514910771AF9Ca656af840dff83E8264EcF986CA")
+);
+WHITELIST_TOKENS.set(
+  "SWETH",
+  Address.fromString("0xf951e335afb289353dc249e82926178eac7ded78")
 );

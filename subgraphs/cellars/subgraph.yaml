@@ -710,6 +710,41 @@ dataSources:
           handler: handleTransfer
       file: ./src/cellar-mapping.ts
   - kind: ethereum
+    name: TurboSWETH
+    network: mainnet
+    source:
+      address: "0xd33dad974b938744dac81fe00ac67cb5aa13958e"
+      abi: CellarV2pt5
+      startBlock: 17910374
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+        - BalanceChange
+      abis:
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+        - name: CellarV2pt5
+          file: ./abis/cellar-v2pt5.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
     name: CellarSnapshot
     network: mainnet
     source:
@@ -734,6 +769,8 @@ dataSources:
           file: ./abis/cellar-v2.json
         - name: V2Adaptor
           file: ./abis/v2-adaptor.json
+        - name: CellarV2pt5
+          file: ./abis/cellar-v2pt5.json
 
         ###########################################
         ############## Price Oracle ###############

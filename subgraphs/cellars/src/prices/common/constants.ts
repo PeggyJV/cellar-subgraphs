@@ -42,6 +42,7 @@ export const WHITELIST_TOKENS_LIST: string[] = [
   "fBTC",
   "FRAX",
   "CRV",
+  "SWETH",
 ];
 
 ///////////////////////////////////////////////////////////////////////////
