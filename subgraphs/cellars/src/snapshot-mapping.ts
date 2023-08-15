@@ -4,6 +4,7 @@ import {
   CELLAR_AAVE_LATEST,
   V1PT5_CELLARS,
   V2_CELLARS,
+  V2pt5_CELLARS,
   ZERO_BI,
   ONE_BI,
   ONE_SHARE,
@@ -98,6 +99,13 @@ export function handleBlock(block: ethereum.Block): void {
   // v2 Cellars
   for (let i = 0; i < V2_CELLARS.length; i++) {
     const address = V2_CELLARS[i];
+    v2SnapshotHour(block, address);
+    v2SnapshotDay(block, address);
+  }
+
+  // v2.5 Cellars, Basically identical to v2 so reuse v2 snapshot functions
+  for (let i = 0; i < V2pt5_CELLARS.length; i++) {
+    const address = V2pt5_CELLARS[i];
     v2SnapshotHour(block, address);
     v2SnapshotDay(block, address);
   }
