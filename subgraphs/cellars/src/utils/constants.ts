@@ -1,5 +1,6 @@
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 
+
 export const SNAPSHOT_INTERVAL_SECS = 60 * 5; // 5 minutes
 
 export const NEGATIVE_ONE_BI = BigInt.fromI32(-1);
@@ -61,6 +62,8 @@ export const DEFI_STARS =
   "0x03df2a53cbed19b824347d6a45d09016c2d1676a".toLowerCase();
 export const FRAXIMAL =
   "0xdbe19d1c3f21b1bb250ca7bdae0687a97b5f77e6".toLowerCase();
+export const TURBO_SWETH =
+  "0xd33dad974b938744dac81fe00ac67cb5aa13958e".toLowerCase();
 
 export const CELLAR_START = new Map<string, BigInt>();
 CELLAR_START.set(CELLAR_CLEARGATE_A, BigInt.fromI32(15733768));
@@ -81,6 +84,7 @@ CELLAR_START.set(REAL_YIELD_ENS, BigInt.fromI32(17377190));
 CELLAR_START.set(DEFI_STARS, BigInt.fromI32(17181497));
 CELLAR_START.set(FRAXIMAL, BigInt.fromI32(17589948));
 CELLAR_START.set(REAL_YIELD_BTC, BigInt.fromI32(17630563));
+CELLAR_START.set(TURBO_SWETH, BigInt.fromI32(17910374));
 
 export const V1PT5_CELLARS = new Array<string>();
 // ETH-BTC
@@ -108,3 +112,6 @@ V2_CELLARS.push(REAL_YIELD_ENS);
 V2_CELLARS.push(REAL_YIELD_BTC);
 V2_CELLARS.push(DEFI_STARS);
 V2_CELLARS.push(FRAXIMAL);
+
+export const V2pt5_CELLARS = new Array<string>();
+V2pt5_CELLARS.push(TURBO_SWETH);
