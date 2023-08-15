@@ -2,9 +2,9 @@ specVersion: 0.0.4
 description: Subgraph that tracks Cellars on the Sommelier network
 features:
   - grafting
-  graft:
-    base: QmbireuYryyWh3bRVVq6ux2cSETjLKbxGrqRmWekoDkemz
-    block: 17910373
+graft:
+  base: QmbireuYryyWh3bRVVq6ux2cSETjLKbxGrqRmWekoDkemz
+  block: 17910373
 schema:
   file: ./schema.graphql
 dataSources:
