@@ -64,6 +64,8 @@ export const FRAXIMAL =
   "0xdbe19d1c3f21b1bb250ca7bdae0687a97b5f77e6".toLowerCase();
 export const TURBO_SWETH =
   "0xd33dad974b938744dac81fe00ac67cb5aa13958e".toLowerCase();
+export const TURBO_GHO =
+  "0x0C190DEd9Be5f512Bd72827bdaD4003e9Cc7975C".toLowerCase();
 
 export const CELLAR_START = new Map<string, BigInt>();
 CELLAR_START.set(CELLAR_CLEARGATE_A, BigInt.fromI32(15733768));
@@ -85,6 +87,7 @@ CELLAR_START.set(DEFI_STARS, BigInt.fromI32(17181497));
 CELLAR_START.set(FRAXIMAL, BigInt.fromI32(17589948));
 CELLAR_START.set(REAL_YIELD_BTC, BigInt.fromI32(17630563));
 CELLAR_START.set(TURBO_SWETH, BigInt.fromI32(17910374));
+CELLAR_START.set(TURBO_GHO, BigInt.fromI32(9999999999)); // TODO: Update start block
 
 export const V1PT5_CELLARS = new Array<string>();
 // ETH-BTC
@@ -115,3 +118,4 @@ V2_CELLARS.push(FRAXIMAL);
 
 export const V2pt5_CELLARS = new Array<string>();
 V2pt5_CELLARS.push(TURBO_SWETH);
+V2pt5_CELLARS.push(TURBO_GHO);
