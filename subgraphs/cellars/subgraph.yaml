@@ -3,8 +3,8 @@ description: Subgraph that tracks Cellars on the Sommelier network
 features:
   - grafting
 graft:
-  base: QmbireuYryyWh3bRVVq6ux2cSETjLKbxGrqRmWekoDkemz
-  block: 17910373
+  base: QmPA6i6LJVapEn89dau4UEm862ZN3eksjj5D2JD4GhGzuA
+  block: 18118613
 schema:
   file: ./schema.graphql
 dataSources:
@@ -716,6 +716,41 @@ dataSources:
       address: "0xd33dad974b938744dac81fe00ac67cb5aa13958e"
       abi: CellarV2pt5
       startBlock: 17910374
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Wallet
+        - WalletCellarShare
+        - WalletDayData
+        - Cellar
+        - CellarDayData
+        - CellarHourData
+        - TokenERC20
+        - BalanceChange
+      abis:
+        - name: Cellar
+          file: ./abis/AaveV2StablecoinCellar.json
+        - name: CellarV2pt5
+          file: ./abis/cellar-v2pt5.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/cellar-mapping.ts
+  - kind: ethereum
+    name: TurboGHO
+    network: mainnet
+    source:
+      address: "0x0c190ded9be5f512bd72827bdad4003e9cc7975c"
+      abi: CellarV2pt5
+      startBlock: 18118614
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

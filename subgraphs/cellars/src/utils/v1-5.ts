@@ -1,30 +1,10 @@
 import { ClearGateCellar } from "../../generated/CellarClearGateA/ClearGateCellar";
 import { Transfer, ERC20 } from "../../generated/CellarSnapshot/ERC20";
 import { getUsdPrice } from "../prices/index";
-import {
-  CELLAR_START,
-  ONE_SHARE,
-  ONE_BI,
-  ZERO_BI,
-  TEN_BI,
-  NEGATIVE_ONE_BI,
-} from "./constants";
-import {
-  convertDecimals,
-  loadCellar,
-  loadCellarDayData,
-  loadCellarHourData,
-  loadPrevCellarDayData,
-  loadOrCreateTokenERC20,
-  normalizeDecimals,
-} from "./helpers";
-import {
-  Address,
-  BigDecimal,
-  BigInt,
-  ethereum,
-  log,
-} from "@graphprotocol/graph-ts";
+import { CELLAR_START, CELLAR_ONE_SHARE_MAPPING, ONE_BI, ZERO_BI, TEN_BI, NEGATIVE_ONE_BI } from "./constants";
+import { convertDecimals, loadCellar, loadCellarDayData, loadCellarHourData, loadPrevCellarDayData, loadOrCreateTokenERC20, normalizeDecimals } from "./helpers";
+import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+
 
 export function snapshotDay(
   block: ethereum.Block,
@@ -111,7 +91,9 @@ export function snapshotHour(
   // TODO
   // snapshot.tvlInvested = cellar.tvlInvested
 
-  const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
+  const convertShareResult = contract.try_convertToAssets(
+    CELLAR_ONE_SHARE_MAPPING.get(cellar.id.toLowerCase())
+  );
   if (convertShareResult.reverted) {
     log.warning("Could not call cellar.converToAssets: {}", [cellar.id]);
   } else {
