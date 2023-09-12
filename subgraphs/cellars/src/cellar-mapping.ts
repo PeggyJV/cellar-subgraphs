@@ -1,5 +1,5 @@
 import { Deposit, DepositIntoPosition, DepositLimitChanged, Withdraw, WithdrawFromPosition, Transfer, LiquidityLimitChanged, Cellar } from "../generated/Cellar/Cellar";
-import { ZERO_BI, ONE_SHARE } from "./utils/constants";
+import { ZERO_BI, CELLAR_ONE_SHARE_MAPPING } from "./utils/constants";
 import { loadWallet, loadOrCreateWallet, loadWalletCellarData, loadBalanceChange } from "./utils/entities";
 import { loadCellar, loadCellarDayData, loadCellarHourData, loadOrCreateTokenERC20, loadWalletCellarShare, loadWalletDayData, normalizeDecimals } from "./utils/helpers";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
@@ -55,7 +55,7 @@ export function handleDeposit(event: Deposit): void {
     timestamp.toI32(),
     liqAmount,
     event.params.shares,
-    contract.try_convertToAssets(ONE_SHARE).value,
+    contract.try_convertToAssets(CELLAR_ONE_SHARE_MAPPING.get(cellar.id.toLowerCase())).value,
     "DEPOSIT"
   );
 
@@ -136,7 +136,7 @@ export function handleWithdraw(event: Withdraw): void {
     timestamp.toI32(),
     liqAmount,
     event.params.shares,
-    contract.try_convertToAssets(ONE_SHARE).value,
+    contract.try_convertToAssets(CELLAR_ONE_SHARE_MAPPING.get(cellar.id.toLowerCase())).value,
     "WITHDRAW"
   );
 

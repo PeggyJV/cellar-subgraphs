@@ -1,36 +1,12 @@
 import { Cellar as CellarContract } from "../generated/Cellar/Cellar";
 import { Cellar } from "../generated/schema";
-import {
-  CELLAR_AAVE_LATEST,
-  V1PT5_CELLARS,
-  V2_CELLARS,
-  V2pt5_CELLARS,
-  ZERO_BI,
-  ONE_BI,
-  ONE_SHARE,
-  NEGATIVE_ONE_BI,
-} from "./utils/constants";
+import { CELLAR_AAVE_LATEST, V1PT5_CELLARS, V2_CELLARS, V2pt5_CELLARS, ZERO_BI, ONE_BI, CELLAR_ONE_SHARE_MAPPING, NEGATIVE_ONE_BI } from "./utils/constants";
 import { loadPlatform } from "./utils/entities";
-import {
-  convertDecimals,
-  loadCellar,
-  loadCellarDayData,
-  loadPrevCellarDayData,
-  loadCellarHourData,
-  loadPrevCellarHourData,
-  loadOrCreateTokenERC20,
-  normalizeDecimals,
-  HOUR_SECONDS,
-} from "./utils/helpers";
-import {
-  snapshotDay as v1_5SnapshotDay,
-  snapshotHour as v1_5SnapshotHour,
-} from "./utils/v1-5";
-import {
-  snapshotDay as v2SnapshotDay,
-  snapshotHour as v2SnapshotHour,
-} from "./utils/v2";
+import { convertDecimals, loadCellar, loadCellarDayData, loadPrevCellarDayData, loadCellarHourData, loadPrevCellarHourData, loadOrCreateTokenERC20, normalizeDecimals, HOUR_SECONDS } from "./utils/helpers";
+import { snapshotDay as v1_5SnapshotDay, snapshotHour as v1_5SnapshotHour } from "./utils/v1-5";
+import { snapshotDay as v2SnapshotDay, snapshotHour as v2SnapshotHour } from "./utils/v2";
 import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+
 
 const cellarLatest = Address.fromString(CELLAR_AAVE_LATEST);
 
@@ -179,7 +155,9 @@ function snapshotHour(block: ethereum.Block, cellar: Cellar): void {
 
   snapshot.tvlInvested = cellar.tvlInvested;
 
-  const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
+  const convertShareResult = contract.try_convertToAssets(
+    CELLAR_ONE_SHARE_MAPPING.get(cellar.id.toLowerCase())
+  );
   if (convertShareResult.reverted) {
     log.warning("Could not call cellar.convertToAssets: {}", [cellar.id]);
   } else {

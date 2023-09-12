@@ -1,35 +1,9 @@
 import { Transfer, ERC20 } from "../../generated/CellarSnapshot/ERC20";
-import {
-  CellarV2,
-  CellarV2__getPositionDataResult,
-} from "../../generated/CellarV2/CellarV2";
-import {
-  CELLAR_START,
-  ONE_SHARE,
-  ONE_BI,
-  ZERO_BI,
-  TEN_BI,
-  NEGATIVE_ONE_BI,
-  REAL_YIELD_ETH,
-  WETH_ADDRESS,
-} from "./constants";
-import {
-  convertDecimals,
-  loadCellar,
-  loadCellarDayData,
-  loadCellarHourData,
-  loadPrevCellarDayData,
-  loadOrCreateTokenERC20,
-  normalizeDecimals,
-} from "./helpers";
-import {
-  Address,
-  BigDecimal,
-  BigInt,
-  Bytes,
-  ethereum,
-  log,
-} from "@graphprotocol/graph-ts";
+import { CellarV2, CellarV2__getPositionDataResult } from "../../generated/CellarV2/CellarV2";
+import { CELLAR_START, CELLAR_ONE_SHARE_MAPPING, ONE_BI, ZERO_BI, TEN_BI, NEGATIVE_ONE_BI, REAL_YIELD_ETH, WETH_ADDRESS } from "./constants";
+import { convertDecimals, loadCellar, loadCellarDayData, loadCellarHourData, loadPrevCellarDayData, loadOrCreateTokenERC20, normalizeDecimals } from "./helpers";
+import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
+
 
 export function snapshotDay(
   block: ethereum.Block,
@@ -108,7 +82,9 @@ export function snapshotHour(
   // TODO
   // snapshot.tvlInvested = cellar.tvlInvested
 
-  const convertShareResult = contract.try_convertToAssets(ONE_SHARE);
+  const convertShareResult = contract.try_convertToAssets(
+    CELLAR_ONE_SHARE_MAPPING.get(cellar.id.toLowerCase())
+  );
   if (convertShareResult.reverted) {
     log.warning("Could not call cellar.convertToAssets: {}", [cellar.id]);
   } else {
